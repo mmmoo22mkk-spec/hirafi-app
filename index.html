@@ -504,6 +504,32 @@
         </div>
     </footer>
 
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, updateDoc, serverTimestamp, getDocs, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // Firebase Configuration - استبدل هذه البيانات ببيانات مشروعك
+        const firebaseConfig = {
+            apiKey: "AIzaSyApS10K5tWSNLfy51bt_GZzNBNfOzQFbLc",
+            authDomain: "asmar-c5a76.firebaseapp.com",
+            projectId: "asmar-c5a76",
+            storageBucket: "asmar-c5a76.firebasestorage.app",
+            messagingSenderId: "122714975670",
+            appId: "1:122714975670:web:5c2bdb8d2aa17a7d712517",
+            measurementId: "G-HSEKEZ92B"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // جعل Firebase متاحاً عالمياً
+        window.db = db;
+        window.firebaseFuncs = { collection, addDoc, onSnapshot, query, where, orderBy, doc, updateDoc, serverTimestamp, getDocs, deleteDoc, setDoc };
+
+        console.log('✅ Firebase متصل بنجاح!');
+    </script>
+
     <script>
         // ============================================================
         //                         البيانات والمتغيرات
@@ -527,6 +553,10 @@
         let chats = [];
         let messages = {};
         let currentChatId = null;
+        let unsubscribeWorkers = null;
+        let unsubscribeRequests = null;
+        let unsubscribeChats = null;
+        let unsubscribeMessages = null;
 
         // ============================================================
         //                      نظام الغرف (Rooms)
@@ -592,7 +622,7 @@
         }
 
         // إنشاء غرفة جديدة
-        function createNewRoom() {
+        async function createNewRoom() {
             const name = document.getElementById('newRoomName').value.trim();
             if (!name) {
                 showToast('⚠️ الرجاء إدخال اسم الغرفة');
@@ -608,6 +638,13 @@
                 createdBy: 'أنت'
             });
             saveRoomsList(rooms);
+
+            // إنشاء مستندات فارغة في Firebase
+            try {
+                const { db, firebaseFuncs } = window;
+                const { setDoc, doc } = firebaseFuncs;
+                await setDoc(doc(db, `rooms/${roomId}/meta/info`), { name: name, createdAt: Date.now() });
+            } catch(e) { console.log('Meta doc creation skipped'); }
 
             // الدخول للغرفة
             enterRoom(roomId, name);
@@ -637,6 +674,12 @@
 
         // الدخول لغرفة
         function enterRoom(roomId, roomName) {
+            // إلغاء الاشتراكات السابقة
+            if (unsubscribeWorkers) unsubscribeWorkers();
+            if (unsubscribeRequests) unsubscribeRequests();
+            if (unsubscribeChats) unsubscribeChats();
+            if (unsubscribeMessages) unsubscribeMessages();
+
             currentRoomId = roomId;
             localStorage.setItem('hirafi_active_room', JSON.stringify({ id: roomId, name: roomName }));
             
@@ -654,14 +697,75 @@
             // إظهار قسم التخصصات
             document.getElementById('categoriesSection').style.display = 'block';
 
+            // الاشتراك في بيانات Firebase
+            subscribeToRoomData(roomId);
+
             // تحديث العرض
             renderCategories();
             renderRoomsList();
         }
 
+        // الاشتراك في بيانات الغرفة من Firebase
+        function subscribeToRoomData(roomId) {
+            const { db, firebaseFuncs } = window;
+            const { collection, onSnapshot } = firebaseFuncs;
+
+            // الاشتراك في العمّال
+            const workersRef = collection(db, `rooms/${roomId}/workers`);
+            unsubscribeWorkers = onSnapshot(workersRef, (snapshot) => {
+                workers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderCategories();
+                if (document.getElementById('view-worker').classList.contains('active')) renderWorkerDashboard();
+                if (document.getElementById('view-category').classList.contains('active')) {
+                    const cat = document.getElementById('category-view-title').textContent.replace('تخصص: ', '').trim();
+                    if (cat) openCategoryPage(cat);
+                }
+            });
+
+            // الاشتراك في الطلبات
+            const requestsRef = collection(db, `rooms/${roomId}/requests`);
+            unsubscribeRequests = onSnapshot(requestsRef, (snapshot) => {
+                requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (document.getElementById('view-client').classList.contains('active')) renderClientDashboard();
+                if (document.getElementById('view-worker').classList.contains('active')) renderWorkerDashboard();
+            });
+
+            // الاشتراك في المحادثات
+            const chatsRef = collection(db, `rooms/${roomId}/chats`);
+            unsubscribeChats = onSnapshot(chatsRef, (snapshot) => {
+                chats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (chats.length === 0) {
+                    chats = [{ id: 'chat_support', name: 'دعم الغرفة', type: 'admin', orderId: 'عام' }];
+                }
+                renderChatList();
+            });
+        }
+
+        // الاشتراك في رسائل محادثة معينة
+        function subscribeToMessages(chatId) {
+            const { db, firebaseFuncs } = window;
+            const { collection, onSnapshot, query, orderBy } = firebaseFuncs;
+
+            if (unsubscribeMessages) unsubscribeMessages();
+
+            const messagesRef = collection(db, `rooms/${currentRoomId}/chats/${chatId}/messages`);
+            const q = query(messagesRef, orderBy('timestamp', 'asc'));
+            unsubscribeMessages = onSnapshot(q, (snapshot) => {
+                messages[chatId] = snapshot.docs.map(doc => doc.data());
+                if (currentChatId === chatId) renderMessages(chatId);
+            });
+        }
+
         // مغادرة الغرفة
         function leaveRoom() {
             if (!confirm('هل تريد مغادرة الغرفة الحالية؟')) return;
+            
+            // إلغاء الاشتراكات
+            if (unsubscribeWorkers) unsubscribeWorkers();
+            if (unsubscribeRequests) unsubscribeRequests();
+            if (unsubscribeChats) unsubscribeChats();
+            if (unsubscribeMessages) unsubscribeMessages();
+
             currentRoomId = null;
             localStorage.removeItem('hirafi_active_room');
             window.location.hash = '';
@@ -885,7 +989,7 @@
         // ============================================================
         //                      إضافة عامل
         // ============================================================
-        function addWorker(event) {
+        async function addWorker(event) {
             event.preventDefault();
             if (!currentRoomId) {
                 showToast('⚠️ الرجاء الانضمام لغرفة أولاً');
@@ -902,15 +1006,32 @@
                 return;
             }
 
-            const newWorker = { id: 'w_' + Date.now(), name, phone, address, specialty, joinedAt: new Date().toLocaleDateString('ar-SA') };
-            workers.push(newWorker);
-            localStorage.setItem(roomKey('workers'), JSON.stringify(workers));
-            localStorage.setItem('hirafi_current_worker', JSON.stringify(newWorker));
-            localStorage.setItem(roomKey('current_worker'), JSON.stringify(newWorker));
+            try {
+                const { db, firebaseFuncs } = window;
+                const { collection, addDoc, serverTimestamp } = firebaseFuncs;
 
-            document.getElementById('workerAddForm').reset();
-            showMessage('workerAddMessage', '✅ تم تسجيلك كعامل بنجاح!', '#27ae60');
-            setTimeout(() => showView('view-worker'), 1500);
+                const newWorker = { 
+                    name, 
+                    phone, 
+                    address, 
+                    specialty, 
+                    joinedAt: new Date().toLocaleDateString('ar-SA'),
+                    createdAt: serverTimestamp() 
+                };
+                
+                await addDoc(collection(db, `rooms/${currentRoomId}/workers`), newWorker);
+
+                const workerData = { name, phone, address, specialty };
+                localStorage.setItem('hirafi_current_worker', JSON.stringify(workerData));
+                localStorage.setItem(roomKey('current_worker'), JSON.stringify(workerData));
+
+                document.getElementById('workerAddForm').reset();
+                showMessage('workerAddMessage', '✅ تم تسجيلك كعامل بنجاح! سيظهر اسمك للجميع.', '#27ae60');
+                setTimeout(() => showView('view-worker'), 1500);
+            } catch (error) {
+                console.error(error);
+                showMessage('workerAddMessage', '❌ حدث خطأ: ' + error.message, '#c0392b');
+            }
         }
 
         function addAddressAuto() {
@@ -936,10 +1057,10 @@
         // ============================================================
         //                      إضافة طلب
         // ============================================================
-        function addRequest(event) {
+        async function addRequest(event) {
             event.preventDefault();
             if (!currentRoomId) {
-                showToast('⚠️ الرجاء الانضمام لغرفة أولاً');
+                showToast('️ الرجاء الانضمام لغرفة أولاً');
                 return;
             }
 
@@ -948,22 +1069,32 @@
             const phone = document.getElementById('requestPhone').value.trim();
 
             if (!specialty || !desc || !phone) {
-                showMessage('requestMessage', '⚠️ الرجاء ملء جميع الحقول', '#c0392b');
+                showMessage('requestMessage', '️ الرجاء ملء جميع الحقول', '#c0392b');
                 return;
             }
 
-            const newRequest = { 
-                id: 'req_' + Date.now(), 
-                specialty, desc, phone, 
-                status: 'قيد المراجعة', 
-                createdAt: new Date().toLocaleString('ar-SA') 
-            };
+            try {
+                const { db, firebaseFuncs } = window;
+                const { collection, addDoc, serverTimestamp } = firebaseFuncs;
 
-            requests.unshift(newRequest);
-            localStorage.setItem(roomKey('requests'), JSON.stringify(requests));
-            document.getElementById('requestForm').reset();
-            showMessage('requestMessage', '✅ تم إرسال طلبك بنجاح!', '#27ae60');
-            setTimeout(() => showView('view-client'), 1500);
+                const newRequest = { 
+                    specialty, 
+                    desc, 
+                    phone, 
+                    status: 'قيد المراجعة', 
+                    createdAt: new Date().toLocaleString('ar-SA'),
+                    timestamp: serverTimestamp()
+                };
+                
+                await addDoc(collection(db, `rooms/${currentRoomId}/requests`), newRequest);
+
+                document.getElementById('requestForm').reset();
+                showMessage('requestMessage', '✅ تم إرسال طلبك بنجاح! سيظهر لجميع العمّال.', '#27ae60');
+                setTimeout(() => showView('view-client'), 1500);
+            } catch (error) {
+                console.error(error);
+                showMessage('requestMessage', '❌ حدث خطأ: ' + error.message, '#c0392b');
+            }
         }
 
         // ============================================================
@@ -984,7 +1115,8 @@
                     <div class="dashboard-item-info">
                         <h4><i class="fas fa-tools"></i> طلب تخصص: ${req.specialty}</h4>
                         <p>${req.desc}</p>
-                        <p style="margin-top:5px; font-size:12px;"><i class="fas fa-clock"></i> ${req.createdAt}</p>
+                        <p style="margin-top:5px; font-size:12px;"><i class="fas fa-phone"></i> ${req.phone}</p>
+                        <p style="font-size:12px;"><i class="fas fa-clock"></i> ${req.createdAt || '...'}</p>
                     </div>
                     <span class="status-badge status-pending">${req.status}</span>
                 </div>
@@ -1012,7 +1144,7 @@
                         </div>
                     </div>
                     <div style="background:rgba(39,174,96,0.1); border:1px solid var(--success); padding:10px; border-radius:8px; text-align:center; color:var(--success); font-weight:700;">
-                        <i class="fas fa-check-circle"></i> حسابك نشط ومرئي للعملاء
+                        <i class="fas fa-check-circle"></i> حسابك نشط ومرئي لجميع العملاء في هذه الغرفة
                     </div>
                 `;
             }
@@ -1075,7 +1207,8 @@
             document.getElementById('chatHeaderName').textContent = chat.name;
             document.getElementById('chatHeaderAvatar').textContent = chat.name.charAt(0);
 
-            renderMessages(chatId);
+            // الاشتراك في رسائل هذه المحادثة
+            subscribeToMessages(chatId);
         }
 
         function renderMessages(chatId) {
@@ -1091,36 +1224,37 @@
             chatMessages.forEach(msg => {
                 const div = document.createElement('div');
                 div.className = `message-bubble ${msg.sender === 'me' ? 'sent' : 'received'}`;
-                div.innerHTML = `${msg.text}<span class="message-time">${msg.time}</span>`;
+                const timeStr = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '';
+                div.innerHTML = `${msg.text}<span class="message-time">${timeStr}</span>`;
                 container.appendChild(div);
             });
             container.scrollTop = container.scrollHeight;
         }
 
-        function sendMessage() {
+        async function sendMessage() {
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
-            if (!text || !currentChatId) return;
+            if (!text || !currentChatId || !currentRoomId) return;
 
-            if (!messages[currentChatId]) messages[currentChatId] = [];
-            const now = new Date();
-            const timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            try {
+                const { db, firebaseFuncs } = window;
+                const { collection, addDoc, serverTimestamp } = firebaseFuncs;
 
-            messages[currentChatId].push({ sender: 'me', text: text, time: timeString });
-            localStorage.setItem(roomKey('messages'), JSON.stringify(messages));
-            input.value = '';
-            renderMessages(currentChatId);
+                await addDoc(collection(db, `rooms/${currentRoomId}/chats/${currentChatId}/messages`), {
+                    text: text,
+                    sender: 'me',
+                    senderName: 'مستخدم',
+                    timestamp: serverTimestamp()
+                });
 
-            setTimeout(() => {
-                if (currentChatId) {
-                    messages[currentChatId].push({ sender: 'other', text: 'تم استلام رسالتك، سأقوم بالرد عليك قريباً.', time: timeString });
-                    localStorage.setItem(roomKey('messages'), JSON.stringify(messages));
-                    renderMessages(currentChatId);
-                }
-            }, 1000);
+                input.value = '';
+            } catch (error) {
+                console.error(error);
+                showToast('❌ فشل إرسال الرسالة');
+            }
         }
 
-        function startChatWith(name, type) {
+        async function startChatWith(name, type) {
             const exists = chats.some(c => c.name === name);
             if (exists) {
                 const chat = chats.find(c => c.name === name);
@@ -1134,14 +1268,22 @@
                 return;
             }
 
-            const newChat = { id: 'chat_' + Date.now(), name: name, type: type, orderId: 'عام' };
-            chats.unshift(newChat);
-            localStorage.setItem(roomKey('chats'), JSON.stringify(chats));
-            showView('view-chat');
-            setTimeout(() => {
-                const items = document.querySelectorAll('.chat-list-item');
-                if(items[0]) items[0].click();
-            }, 100);
+            try {
+                const { db, firebaseFuncs } = window;
+                const { collection, addDoc } = firebaseFuncs;
+
+                const newChat = { name: name, type: type, orderId: 'عام', createdAt: Date.now() };
+                await addDoc(collection(db, `rooms/${currentRoomId}/chats`), newChat);
+                
+                showView('view-chat');
+                setTimeout(() => {
+                    const items = document.querySelectorAll('.chat-list-item');
+                    if(items[0]) items[0].click();
+                }, 500);
+            } catch (error) {
+                console.error(error);
+                showToast('❌ فشل إنشاء المحادثة');
+            }
         }
 
         function showMessage(elementId, text, color) {
