@@ -25,6 +25,7 @@
         .app-view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* شريط الغرفة */
         .room-bar { background: linear-gradient(135deg, var(--primary-light), var(--primary-dark)); border-bottom: 2px solid var(--secondary); padding: 10px 0; display: none; }
         .room-bar.active { display: block; }
         .room-bar-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
@@ -38,6 +39,7 @@
         .room-btn-leave { background: transparent; border: 1px solid var(--accent); color: var(--accent-light); }
         .room-btn-leave:hover { background: var(--accent); color: white; }
 
+        /* نافذة إنشاء غرفة */
         .room-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .room-modal.active { display: flex; }
         .room-modal-content { background: var(--card-bg); border: 2px solid var(--secondary); border-radius: var(--radius); padding: 30px; max-width: 500px; width: 100%; text-align: center; animation: fadeIn 0.3s ease; }
@@ -48,6 +50,7 @@
         .room-modal-actions { display: flex; gap: 10px; }
         .room-modal-actions button { flex: 1; }
 
+        /* شريط التنقل */
         .navbar { background: var(--primary); box-shadow: 0 2px 15px rgba(212, 160, 23, 0.12); position: sticky; top: 0; z-index: 1000; border-bottom: 2px solid var(--secondary); transition: var(--transition); }
         .nav-wrap { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; max-width: 1200px; margin: 0 auto; }
         .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 24px; color: white; font-family: 'Amiri', serif; text-decoration: none; transition: var(--transition); cursor: pointer; }
@@ -66,6 +69,7 @@
         .menu-toggle { display: none; background: none; border: none; font-size: 22px; color: white; cursor: pointer; transition: var(--transition); }
         .menu-toggle:hover { transform: rotate(90deg); color: var(--secondary-light); }
 
+        /* الهيرو */
         .hero { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; padding: 60px 0 70px; position: relative; overflow: hidden; border-bottom: 3px solid var(--secondary); text-align: center; }
         .hero::before { content: ''; position: absolute; top: -50%; right: -20%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(212, 160, 23, 0.08), transparent); border-radius: 50%; animation: float 20s ease-in-out infinite; }
         @keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(20px, -20px) scale(1.1); } }
@@ -76,6 +80,7 @@
         .search-box input { flex: 1; border: none; padding: 12px 18px; font-size: 15px; font-family: inherit; outline: none; background: rgba(255, 255, 255, 0.9); color: var(--primary); border-radius: 10px; }
         .search-box button { padding: 12px 20px; }
 
+        /* بطاقات الغرف */
         .rooms-section { background: var(--primary-dark); padding: 40px 0; border-bottom: 1px solid var(--border); }
         .rooms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
         .room-card { background: var(--card-bg); padding: 25px; border-radius: var(--radius); border: 2px solid var(--border); transition: var(--transition); position: relative; overflow: hidden; }
@@ -139,6 +144,7 @@
         .dashboard-item-info p { font-size: 13px; color: var(--text-muted); }
         .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
         .status-pending { background: rgba(212, 160, 23, 0.15); color: var(--secondary-light); }
+        .status-accepted { background: rgba(39, 174, 96, 0.15); color: var(--success); }
 
         .chat-integrated-wrapper { display: grid; grid-template-columns: 300px 1fr; gap: 0; background: var(--card-bg); border-radius: var(--radius); overflow: hidden; border: 2px solid var(--border); height: 500px; }
         .chat-list-side { background: #0d0d0d; border-left: 1px solid var(--border); padding: 15px; overflow-y: auto; }
@@ -167,13 +173,9 @@
         .chat-float-btn { position: fixed; bottom: 30px; left: 30px; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); color: var(--primary); border: none; font-size: 24px; cursor: pointer; box-shadow: 0 4px 20px rgba(212, 160, 23, 0.4); transition: var(--transition); z-index: 999; display: flex; align-items: center; justify-content: center; }
         .chat-float-btn:hover { transform: scale(1.1) rotate(-10deg); }
 
+        /* Toast للإشعارات */
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--card-bg); border: 2px solid var(--secondary); color: var(--text); padding: 12px 24px; border-radius: 12px; box-shadow: 0 8px 30px rgba(212, 160, 23, 0.3); z-index: 3000; display: none; font-weight: 700; animation: fadeIn 0.3s ease; }
         .toast.show { display: block; }
-
-        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 5000; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 15px; }
-        .loading-overlay.active { display: flex; }
-        .spinner { width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--secondary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
 
         footer { background: var(--primary); color: white; padding: 30px 0 15px; text-align: center; border-top: 3px solid var(--secondary); margin-top: 40px; }
         .footer-logo { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 12px; font-weight: 900; font-size: 22px; font-family: 'Amiri', serif; }
@@ -198,11 +200,7 @@
 </head>
 <body>
 
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-        <p>جاري الاتصال...</p>
-    </div>
-
+    <!-- شريط الغرفة النشطة -->
     <div class="room-bar" id="roomBar">
         <div class="container">
             <div class="room-bar-content">
@@ -224,6 +222,7 @@
         </div>
     </div>
 
+    <!-- شريط التنقل -->
     <nav class="navbar">
         <div class="nav-wrap">
             <div class="logo" onclick="showView('view-home')">
@@ -241,8 +240,10 @@
         </div>
     </nav>
 
+    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
+    <!-- Modal إنشاء/دخول غرفة -->
     <div class="room-modal" id="roomModal">
         <div class="room-modal-content">
             <h3><i class="fas fa-door-open" style="color:var(--secondary)"></i> انضم لغرفة عمل</h3>
@@ -262,6 +263,7 @@
     </div>
 
     <main id="app">
+        <!-- الصفحة الرئيسية -->
         <div id="view-home" class="app-view active">
             <section class="hero">
                 <div class="container">
@@ -274,6 +276,7 @@
                 </div>
             </section>
 
+            <!-- قسم الغرف -->
             <section class="rooms-section">
                 <div class="container">
                     <div class="section-title">
@@ -285,7 +288,9 @@
                             <i class="fas fa-plus-circle"></i> إنشاء غرفة جديدة / الانضمام
                         </button>
                     </div>
-                    <div class="rooms-grid" id="roomsGrid"></div>
+                    <div class="rooms-grid" id="roomsGrid">
+                        <!-- يتم التعبئة بواسطة JS -->
+                    </div>
                 </div>
             </section>
 
@@ -300,6 +305,7 @@
             </section>
         </div>
 
+        <!-- صفحة تخصص معين -->
         <div id="view-category" class="app-view">
             <section>
                 <div class="container">
@@ -315,6 +321,7 @@
             </section>
         </div>
 
+        <!-- لوحة العميل -->
         <div id="view-client" class="app-view">
             <section>
                 <div class="container">
@@ -333,6 +340,7 @@
             </section>
         </div>
 
+        <!-- لوحة العامل -->
         <div id="view-worker" class="app-view">
             <section>
                 <div class="container">
@@ -354,6 +362,7 @@
             </section>
         </div>
 
+        <!-- إضافة عامل -->
         <div id="view-add-worker" class="app-view">
             <section>
                 <div class="container">
@@ -402,6 +411,7 @@
             </section>
         </div>
 
+        <!-- إضافة طلب -->
         <div id="view-add-request" class="app-view">
             <section>
                 <div class="container">
@@ -441,6 +451,7 @@
             </section>
         </div>
 
+        <!-- الدردشة -->
         <div id="view-chat" class="app-view">
             <section>
                 <div class="container">
@@ -493,71 +504,45 @@
         </div>
     </footer>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, updateDoc, serverTimestamp, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyApS10K5tWSNLfy51bt_GZzNBNfOzQFbLc",
-            authDomain: "asmar-c5a76.firebaseapp.com",
-            projectId: "asmar-c5a76",
-            storageBucket: "asmar-c5a76.firebasestorage.app",
-            messagingSenderId: "122714975670",
-            appId: "1:122714975670:web:5c2bdb8d2aa17a7d712517",
-            measurementId: "G-HSEKEZ92B"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // جعل Firebase متاحاً عالمياً
-        window.db = db;
-        window.firebaseFuncs = { collection, addDoc, onSnapshot, query, where, orderBy, doc, updateDoc, serverTimestamp, getDocs, deleteDoc };
-
-        // إخفاء شاشة التحميل
-        setTimeout(() => {
-            document.getElementById('loadingOverlay').classList.remove('active');
-        }, 1500);
-
-        console.log('✅ Firebase متصل بنجاح!');
-    </script>
-
     <script>
+        // ============================================================
+        //                         البيانات والمتغيرات
+        // ============================================================
         const categories = [
-            { name: 'كهرباء', icon: 'fa-bolt' },
-            { name: 'سباكة', icon: 'fa-wrench' },
-            { name: 'بناء', icon: 'fa-hard-hat' },
-            { name: 'لياسة', icon: 'fa-paint-roller' },
-            { name: 'بلاط', icon: 'fa-th-large' },
-            { name: 'دهانات', icon: 'fa-palette' },
-            { name: 'نجارة', icon: 'fa-hammer' },
-            { name: 'حدادة', icon: 'fa-fire' },
-            { name: 'تبريد', icon: 'fa-snowflake' },
-            { name: 'أخرى', icon: 'fa-tools' }
+            { name: 'كهرباء', icon: 'fa-bolt', count: 0 },
+            { name: 'سباكة', icon: 'fa-wrench', count: 0 },
+            { name: 'بناء', icon: 'fa-hard-hat', count: 0 },
+            { name: 'لياسة', icon: 'fa-paint-roller', count: 0 },
+            { name: 'بلاط', icon: 'fa-th-large', count: 0 },
+            { name: 'دهانات', icon: 'fa-palette', count: 0 },
+            { name: 'نجارة', icon: 'fa-hammer', count: 0 },
+            { name: 'حدادة', icon: 'fa-fire', count: 0 },
+            { name: 'تبريد', icon: 'fa-snowflake', count: 0 },
+            { name: 'أخرى', icon: 'fa-tools', count: 0 }
         ];
 
         let currentRoomId = null;
-        let currentRoomName = '';
         let workers = [];
         let requests = [];
         let chats = [];
         let messages = {};
         let currentChatId = null;
-        let currentWorker = null;
-        let unsubscribeWorkers = null;
-        let unsubscribeRequests = null;
-        let unsubscribeChats = null;
-        let unsubscribeMessages = null;
 
+        // ============================================================
+        //                      نظام الغرف (Rooms)
+        // ============================================================
+        
+        // توليد معرف فريد
         function generateRoomId() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let result = '';
-            for (let i = 0; i < 8; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+            for (let i = 0; i < 8; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
             return result;
         }
 
+        // جلب قائمة الغرف المحفوظة
         function getSavedRooms() {
             return JSON.parse(localStorage.getItem('hirafi_all_rooms')) || [];
         }
@@ -566,132 +551,118 @@
             localStorage.setItem('hirafi_all_rooms', JSON.stringify(rooms));
         }
 
-        function openRoomModal() { document.getElementById('roomModal').classList.add('active'); }
+        // مفاتيح localStorage الخاصة بالغرفة الحالية
+        function roomKey(key) {
+            if (!currentRoomId) return `hirafi_${key}`;
+            return `hirafi_room_${currentRoomId}_${key}`;
+        }
+
+        // تحميل بيانات الغرفة الحالية
+        function loadRoomData() {
+            workers = JSON.parse(localStorage.getItem(roomKey('workers'))) || [];
+            requests = JSON.parse(localStorage.getItem(roomKey('requests'))) || [];
+            chats = JSON.parse(localStorage.getItem(roomKey('chats'))) || [
+                { id: 'chat_support', name: 'دعم الغرفة', type: 'admin', orderId: 'عام' }
+            ];
+            messages = JSON.parse(localStorage.getItem(roomKey('messages'))) || {};
+            const currentWorker = localStorage.getItem(roomKey('current_worker'));
+            if (currentWorker) {
+                localStorage.setItem('hirafi_current_worker', currentWorker);
+            }
+        }
+
+        // حفظ بيانات الغرفة الحالية
+        function saveRoomData() {
+            if (!currentRoomId) return;
+            localStorage.setItem(roomKey('workers'), JSON.stringify(workers));
+            localStorage.setItem(roomKey('requests'), JSON.stringify(requests));
+            localStorage.setItem(roomKey('chats'), JSON.stringify(chats));
+            localStorage.setItem(roomKey('messages'), JSON.stringify(messages));
+        }
+
+        // فتح نافذة إنشاء/دخول غرفة
+        function openRoomModal() {
+            document.getElementById('roomModal').classList.add('active');
+        }
+
         function closeRoomModal() {
             document.getElementById('roomModal').classList.remove('active');
             document.getElementById('newRoomName').value = '';
             document.getElementById('joinRoomCode').value = '';
         }
 
-        async function createNewRoom() {
+        // إنشاء غرفة جديدة
+        function createNewRoom() {
             const name = document.getElementById('newRoomName').value.trim();
-            if (!name) { showToast('️ الرجاء إدخال اسم الغرفة'); return; }
+            if (!name) {
+                showToast('⚠️ الرجاء إدخال اسم الغرفة');
+                return;
+            }
 
             const roomId = generateRoomId();
             const rooms = getSavedRooms();
-            rooms.push({ id: roomId, name: name, createdAt: new Date().toLocaleString('ar-SA'), createdBy: 'أنت' });
+            rooms.push({
+                id: roomId,
+                name: name,
+                createdAt: new Date().toLocaleString('ar-SA'),
+                createdBy: 'أنت'
+            });
             saveRoomsList(rooms);
 
-            // إنشاء مستندات فارغة في Firebase
-            try {
-                const { db, firebaseFuncs } = window;
-                const { collection, addDoc, doc, setDoc } = firebaseFuncs;
-                // إنشاء وثائق أولية
-                await setDoc(doc(db, `rooms/${roomId}/meta/info`), { name: name, createdAt: Date.now() });
-            } catch(e) { console.log('Meta doc creation skipped'); }
-
+            // الدخول للغرفة
             enterRoom(roomId, name);
             closeRoomModal();
             showToast('✅ تم إنشاء الغرفة بنجاح!');
         }
 
+        // الانضمام لغرفة موجودة
         function joinExistingRoom() {
             const code = document.getElementById('joinRoomCode').value.trim().toUpperCase();
-            if (!code) { showToast('⚠️ الرجاء إدخال كود الغرفة'); return; }
+            if (!code) {
+                showToast('⚠️ الرجاء إدخال كود الغرفة');
+                return;
+            }
 
             const rooms = getSavedRooms();
             const room = rooms.find(r => r.id === code);
-            if (!room) { showToast('❌ كود الغرفة غير صحيح'); return; }
+            if (!room) {
+                showToast('❌ كود الغرفة غير صحيح');
+                return;
+            }
 
             enterRoom(room.id, room.name);
             closeRoomModal();
             showToast('✅ تم الانضمام للغرفة!');
         }
 
+        // الدخول لغرفة
         function enterRoom(roomId, roomName) {
-            // إلغاء الاشتراكات السابقة
-            if (unsubscribeWorkers) unsubscribeWorkers();
-            if (unsubscribeRequests) unsubscribeRequests();
-            if (unsubscribeChats) unsubscribeChats();
-            if (unsubscribeMessages) unsubscribeMessages();
-
             currentRoomId = roomId;
-            currentRoomName = roomName;
             localStorage.setItem('hirafi_active_room', JSON.stringify({ id: roomId, name: roomName }));
+            
+            // تحديث URL
             window.location.hash = `room=${roomId}`;
 
+            // تحميل بيانات الغرفة
+            loadRoomData();
+
+            // تحديث شريط الغرفة
             document.getElementById('roomBar').classList.add('active');
             document.getElementById('currentRoomId').textContent = roomId;
             document.getElementById('currentRoomName').textContent = roomName;
+
+            // إظهار قسم التخصصات
             document.getElementById('categoriesSection').style.display = 'block';
 
-            // تحميل العامل الحالي
-            currentWorker = JSON.parse(localStorage.getItem(`hirafi_worker_${roomId}`) || localStorage.getItem('hirafi_current_worker') || 'null');
-
-            // الاشتراك في بيانات Firebase
-            subscribeToRoomData(roomId);
-
+            // تحديث العرض
+            renderCategories();
             renderRoomsList();
         }
 
-        function subscribeToRoomData(roomId) {
-            const { db, firebaseFuncs } = window;
-            const { collection, onSnapshot, query, orderBy } = firebaseFuncs;
-
-            // الاشتراك في العمّال
-            const workersRef = collection(db, `rooms/${roomId}/workers`);
-            unsubscribeWorkers = onSnapshot(workersRef, (snapshot) => {
-                workers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderCategories();
-                if (document.getElementById('view-worker').classList.contains('active')) renderWorkerDashboard();
-                if (document.getElementById('view-category').classList.contains('active')) {
-                    const cat = document.getElementById('category-view-title').textContent.replace('تخصص: ', '').trim();
-                    if (cat) openCategoryPage(cat);
-                }
-            });
-
-            // الاشتراك في الطلبات
-            const requestsRef = collection(db, `rooms/${roomId}/requests`);
-            unsubscribeRequests = onSnapshot(requestsRef, (snapshot) => {
-                requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (document.getElementById('view-client').classList.contains('active')) renderClientDashboard();
-                if (document.getElementById('view-worker').classList.contains('active')) renderWorkerDashboard();
-            });
-
-            // الاشتراك في المحادثات
-            const chatsRef = collection(db, `rooms/${roomId}/chats`);
-            unsubscribeChats = onSnapshot(chatsRef, (snapshot) => {
-                chats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (chats.length === 0) {
-                    chats = [{ id: 'chat_support', name: 'دعم الغرفة', type: 'admin', orderId: 'عام' }];
-                }
-                renderChatList();
-            });
-        }
-
-        function subscribeToMessages(chatId) {
-            const { db, firebaseFuncs } = window;
-            const { collection, onSnapshot, query, orderBy } = firebaseFuncs;
-
-            if (unsubscribeMessages) unsubscribeMessages();
-
-            const messagesRef = collection(db, `rooms/${currentRoomId}/chats/${chatId}/messages`);
-            const q = query(messagesRef, orderBy('timestamp', 'asc'));
-            unsubscribeMessages = onSnapshot(q, (snapshot) => {
-                messages[chatId] = snapshot.docs.map(doc => doc.data());
-                if (currentChatId === chatId) renderMessages(chatId);
-            });
-        }
-
+        // مغادرة الغرفة
         function leaveRoom() {
             if (!confirm('هل تريد مغادرة الغرفة الحالية؟')) return;
-            if (unsubscribeWorkers) unsubscribeWorkers();
-            if (unsubscribeRequests) unsubscribeRequests();
-            if (unsubscribeChats) unsubscribeChats();
-            if (unsubscribeMessages) unsubscribeMessages();
-
             currentRoomId = null;
-            currentRoomName = '';
             localStorage.removeItem('hirafi_active_room');
             window.location.hash = '';
             document.getElementById('roomBar').classList.remove('active');
@@ -701,22 +672,37 @@
             showToast('👋 غادرت الغرفة');
         }
 
+        // نسخ رابط الغرفة
         function copyRoomLink() {
             if (!currentRoomId) return;
             const link = window.location.origin + window.location.pathname + '#room=' + currentRoomId;
             navigator.clipboard.writeText(link).then(() => {
                 showToast('✅ تم نسخ رابط الغرفة! شاركه مع فريقك');
             }).catch(() => {
-                showToast('الرابط: ' + link);
+                // بديل في حال فشل clipboard
+                const tempInput = document.createElement('input');
+                tempInput.value = link;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                showToast('✅ تم نسخ رابط الغرفة!');
             });
         }
 
+        // عرض قائمة الغرف
         function renderRoomsList() {
             const grid = document.getElementById('roomsGrid');
             const rooms = getSavedRooms();
 
             if (rooms.length === 0) {
-                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-door-closed"></i><p>لا توجد غرف عمل حتى الآن</p><p style="font-size:13px;">أنشئ غرفتك الأولى وشارك الرابط!</p></div>`;
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1;">
+                        <i class="fas fa-door-closed"></i>
+                        <p>لا توجد غرف عمل حتى الآن</p>
+                        <p style="font-size:13px;">أنشئ غرفتك الأولى وشارك الرابط!</p>
+                    </div>
+                `;
                 return;
             }
 
@@ -731,9 +717,15 @@
                     </div>
                     <p><i class="fas fa-calendar"></i> ${room.createdAt}</p>
                     <div class="room-card-actions">
-                        <button class="btn" onclick="enterRoom('${room.id}', '${room.name.replace(/'/g, "\\'")}')"><i class="fas fa-right-to-bracket"></i> دخول</button>
-                        <button class="btn btn-outline" onclick="shareRoomById('${room.id}', '${room.name.replace(/'/g, "\\'")}')"><i class="fas fa-share-nodes"></i> مشاركة</button>
-                        <button class="btn" style="background:var(--accent); color:white;" onclick="deleteRoom('${room.id}')"><i class="fas fa-trash"></i></button>
+                        <button class="btn" onclick="enterRoom('${room.id}', '${room.name.replace(/'/g, "\\'")}')">
+                            <i class="fas fa-right-to-bracket"></i> دخول
+                        </button>
+                        <button class="btn btn-outline" onclick="shareRoomById('${room.id}', '${room.name.replace(/'/g, "\\'")}')">
+                            <i class="fas fa-share-nodes"></i> مشاركة
+                        </button>
+                        <button class="btn" style="background:var(--accent); color:white;" onclick="deleteRoom('${room.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
             `).join('');
@@ -743,30 +735,66 @@
             const link = window.location.origin + window.location.pathname + '#room=' + roomId;
             navigator.clipboard.writeText(link).then(() => {
                 showToast(`✅ تم نسخ رابط غرفة "${roomName}"`);
+            }).catch(() => {
+                showToast('الرابط: ' + link);
             });
         }
 
         function deleteRoom(roomId) {
-            if (!confirm('هل تريد حذف هذه الغرفة؟')) return;
+            if (!confirm('هل تريد حذف هذه الغرفة؟ سيتم حذف جميع بياناتها.')) return;
             let rooms = getSavedRooms();
             rooms = rooms.filter(r => r.id !== roomId);
             saveRoomsList(rooms);
-            if (currentRoomId === roomId) leaveRoom();
+            
+            // حذف بيانات الغرفة
+            localStorage.removeItem(`hirafi_room_${roomId}_workers`);
+            localStorage.removeItem(`hirafi_room_${roomId}_requests`);
+            localStorage.removeItem(`hirafi_room_${roomId}_chats`);
+            localStorage.removeItem(`hirafi_room_${roomId}_messages`);
+            localStorage.removeItem(`hirafi_room_${roomId}_current_worker`);
+
+            if (currentRoomId === roomId) {
+                leaveRoom();
+            }
             renderRoomsList();
             showToast('🗑️ تم حذف الغرفة');
         }
 
-        window.addEventListener('hashchange', () => {
+        // الاستماع لتغييرات URL hash
+        window.addEventListener('hashchange', handleHashChange);
+
+        function handleHashChange() {
             const hash = window.location.hash;
             const match = hash.match(/room=([A-Z0-9]+)/i);
             if (match) {
                 const roomId = match[1].toUpperCase();
                 const rooms = getSavedRooms();
                 const room = rooms.find(r => r.id === roomId);
-                if (room && currentRoomId !== roomId) enterRoom(room.id, room.name);
+                if (room && currentRoomId !== roomId) {
+                    enterRoom(room.id, room.name);
+                }
+            }
+        }
+
+        // مزامنة البيانات بين النوافذ (نفس الجهاز)
+        window.addEventListener('storage', (e) => {
+            if (!currentRoomId) return;
+            if (e.key === roomKey('workers')) {
+                workers = JSON.parse(e.newValue) || [];
+                renderCategories();
+            } else if (e.key === roomKey('requests')) {
+                requests = JSON.parse(e.newValue) || [];
+                if (document.getElementById('view-client').classList.contains('active')) renderClientDashboard();
+                if (document.getElementById('view-worker').classList.contains('active')) renderWorkerDashboard();
+            } else if (e.key === roomKey('messages')) {
+                messages = JSON.parse(e.newValue) || {};
+                if (currentChatId) renderMessages(currentChatId);
             }
         });
 
+        // ============================================================
+        //                      Toast
+        // ============================================================
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
@@ -774,6 +802,9 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
+        // ============================================================
+        //                      نظام التنقل
+        // ============================================================
         function showView(viewId) {
             document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
@@ -786,19 +817,23 @@
             if (viewId === 'view-chat') renderChatList();
         }
 
-        function toggleMenu() { document.getElementById('navLinks').classList.toggle('active'); }
+        function toggleMenu() {
+            document.getElementById('navLinks').classList.toggle('active');
+        }
 
+        // ============================================================
+        //                      التخصصات والعمّال
+        // ============================================================
         function renderCategories() {
-            const counts = {};
-            categories.forEach(c => counts[c.name] = 0);
-            workers.forEach(w => { if (counts[w.specialty] !== undefined) counts[w.specialty]++; });
-
+            categories.forEach(cat => {
+                cat.count = workers.filter(w => w.specialty === cat.name).length;
+            });
             const grid = document.getElementById('categoriesGrid');
             grid.innerHTML = categories.map(cat => `
                 <div class="category-card" onclick="openCategoryPage('${cat.name}')">
                     <div class="category-icon"><i class="fas ${cat.icon}"></i></div>
                     <h3>${cat.name}</h3>
-                    <span>${counts[cat.name]} عامل متاح</span>
+                    <span>${cat.count} عامل متاح</span>
                 </div>
             `).join('');
         }
@@ -836,7 +871,10 @@
         }
 
         function searchCategory() {
-            if (!currentRoomId) { showToast('️ الرجاء الانضمام لغرفة أولاً'); return; }
+            if (!currentRoomId) {
+                showToast('⚠️ الرجاء الانضمام لغرفة أولاً');
+                return;
+            }
             const query = document.getElementById('heroSearch').value.trim();
             if (!query) return;
             const found = categories.find(c => c.name.includes(query));
@@ -844,9 +882,15 @@
             else showToast('⚠️ لم يتم العثور على هذا التخصص');
         }
 
-        async function addWorker(event) {
+        // ============================================================
+        //                      إضافة عامل
+        // ============================================================
+        function addWorker(event) {
             event.preventDefault();
-            if (!currentRoomId) { showToast('️ الرجاء الانضمام لغرفة أولاً'); return; }
+            if (!currentRoomId) {
+                showToast('⚠️ الرجاء الانضمام لغرفة أولاً');
+                return;
+            }
 
             const name = document.getElementById('workerName').value.trim();
             const phone = document.getElementById('workerPhone').value.trim();
@@ -858,24 +902,15 @@
                 return;
             }
 
-            try {
-                const { db, firebaseFuncs } = window;
-                const { collection, addDoc, serverTimestamp } = firebaseFuncs;
+            const newWorker = { id: 'w_' + Date.now(), name, phone, address, specialty, joinedAt: new Date().toLocaleDateString('ar-SA') };
+            workers.push(newWorker);
+            localStorage.setItem(roomKey('workers'), JSON.stringify(workers));
+            localStorage.setItem('hirafi_current_worker', JSON.stringify(newWorker));
+            localStorage.setItem(roomKey('current_worker'), JSON.stringify(newWorker));
 
-                const newWorker = { name, phone, address, specialty, joinedAt: new Date().toLocaleDateString('ar-SA'), createdAt: serverTimestamp() };
-                await addDoc(collection(db, `rooms/${currentRoomId}/workers`), newWorker);
-
-                currentWorker = { name, phone, address, specialty };
-                localStorage.setItem(`hirafi_worker_${currentRoomId}`, JSON.stringify(currentWorker));
-                localStorage.setItem('hirafi_current_worker', JSON.stringify(currentWorker));
-
-                document.getElementById('workerAddForm').reset();
-                showMessage('workerAddMessage', '✅ تم تسجيلك كعامل بنجاح! سيظهر اسمك للجميع.', '#27ae60');
-                setTimeout(() => showView('view-worker'), 1500);
-            } catch (error) {
-                console.error(error);
-                showMessage('workerAddMessage', '❌ حدث خطأ: ' + error.message, '#c0392b');
-            }
+            document.getElementById('workerAddForm').reset();
+            showMessage('workerAddMessage', '✅ تم تسجيلك كعامل بنجاح!', '#27ae60');
+            setTimeout(() => showView('view-worker'), 1500);
         }
 
         function addAddressAuto() {
@@ -890,13 +925,23 @@
                     } catch (e) {
                         addressInput.value = `خط طول: ${position.coords.longitude}, دائرة عرض: ${position.coords.latitude}`;
                     }
-                }, () => { addressInput.value = 'تعذر تحديد الموقع.'; });
-            } else { addressInput.value = 'المتصفح لا يدعم تحديد الموقع.'; }
+                }, () => {
+                    addressInput.value = 'تعذر تحديد الموقع. يرجى كتابته يدوياً.';
+                });
+            } else {
+                addressInput.value = 'المتصفح لا يدعم تحديد الموقع.';
+            }
         }
 
-        async function addRequest(event) {
+        // ============================================================
+        //                      إضافة طلب
+        // ============================================================
+        function addRequest(event) {
             event.preventDefault();
-            if (!currentRoomId) { showToast('️ الرجاء الانضمام لغرفة أولاً'); return; }
+            if (!currentRoomId) {
+                showToast('⚠️ الرجاء الانضمام لغرفة أولاً');
+                return;
+            }
 
             const specialty = document.getElementById('requestSpecialty').value;
             const desc = document.getElementById('requestDesc').value.trim();
@@ -907,27 +952,23 @@
                 return;
             }
 
-            try {
-                const { db, firebaseFuncs } = window;
-                const { collection, addDoc, serverTimestamp } = firebaseFuncs;
+            const newRequest = { 
+                id: 'req_' + Date.now(), 
+                specialty, desc, phone, 
+                status: 'قيد المراجعة', 
+                createdAt: new Date().toLocaleString('ar-SA') 
+            };
 
-                const newRequest = { 
-                    specialty, desc, phone, 
-                    status: 'قيد المراجعة', 
-                    createdAt: new Date().toLocaleString('ar-SA'),
-                    timestamp: serverTimestamp()
-                };
-                await addDoc(collection(db, `rooms/${currentRoomId}/requests`), newRequest);
-
-                document.getElementById('requestForm').reset();
-                showMessage('requestMessage', '✅ تم إرسال طلبك بنجاح! سيظهر لجميع العمّال.', '#27ae60');
-                setTimeout(() => showView('view-client'), 1500);
-            } catch (error) {
-                console.error(error);
-                showMessage('requestMessage', '❌ حدث خطأ: ' + error.message, '#c0392b');
-            }
+            requests.unshift(newRequest);
+            localStorage.setItem(roomKey('requests'), JSON.stringify(requests));
+            document.getElementById('requestForm').reset();
+            showMessage('requestMessage', '✅ تم إرسال طلبك بنجاح!', '#27ae60');
+            setTimeout(() => showView('view-client'), 1500);
         }
 
+        // ============================================================
+        //                      لوحات التحكم
+        // ============================================================
         function renderClientDashboard() {
             const list = document.getElementById('client-requests-list');
             if (!currentRoomId) {
@@ -943,8 +984,7 @@
                     <div class="dashboard-item-info">
                         <h4><i class="fas fa-tools"></i> طلب تخصص: ${req.specialty}</h4>
                         <p>${req.desc}</p>
-                        <p style="margin-top:5px; font-size:12px;"><i class="fas fa-phone"></i> ${req.phone}</p>
-                        <p style="font-size:12px;"><i class="fas fa-clock"></i> ${req.createdAt || '...'}</p>
+                        <p style="margin-top:5px; font-size:12px;"><i class="fas fa-clock"></i> ${req.createdAt}</p>
                     </div>
                     <span class="status-badge status-pending">${req.status}</span>
                 </div>
@@ -952,6 +992,7 @@
         }
 
         function renderWorkerDashboard() {
+            const currentWorker = JSON.parse(localStorage.getItem('hirafi_current_worker'));
             const profileDiv = document.getElementById('worker-profile-display');
             
             if (!currentRoomId) {
@@ -971,7 +1012,7 @@
                         </div>
                     </div>
                     <div style="background:rgba(39,174,96,0.1); border:1px solid var(--success); padding:10px; border-radius:8px; text-align:center; color:var(--success); font-weight:700;">
-                        <i class="fas fa-check-circle"></i> حسابك نشط ومرئي لجميع العملاء في هذه الغرفة
+                        <i class="fas fa-check-circle"></i> حسابك نشط ومرئي للعملاء
                     </div>
                 `;
             }
@@ -997,7 +1038,10 @@
             }
         }
 
-        async function renderChatList() {
+        // ============================================================
+        //                      الدردشة
+        // ============================================================
+        function renderChatList() {
             const container = document.getElementById('chatListItemsSide');
             if (!currentRoomId) {
                 container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">الرجاء الانضمام لغرفة أولاً</div>`;
@@ -1031,8 +1075,7 @@
             document.getElementById('chatHeaderName').textContent = chat.name;
             document.getElementById('chatHeaderAvatar').textContent = chat.name.charAt(0);
 
-            // الاشتراك في رسائل هذه المحادثة
-            subscribeToMessages(chatId);
+            renderMessages(chatId);
         }
 
         function renderMessages(chatId) {
@@ -1048,37 +1091,36 @@
             chatMessages.forEach(msg => {
                 const div = document.createElement('div');
                 div.className = `message-bubble ${msg.sender === 'me' ? 'sent' : 'received'}`;
-                const timeStr = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '';
-                div.innerHTML = `${msg.text}<span class="message-time">${timeStr}</span>`;
+                div.innerHTML = `${msg.text}<span class="message-time">${msg.time}</span>`;
                 container.appendChild(div);
             });
             container.scrollTop = container.scrollHeight;
         }
 
-        async function sendMessage() {
+        function sendMessage() {
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
-            if (!text || !currentChatId || !currentRoomId) return;
+            if (!text || !currentChatId) return;
 
-            try {
-                const { db, firebaseFuncs } = window;
-                const { collection, addDoc, serverTimestamp } = firebaseFuncs;
+            if (!messages[currentChatId]) messages[currentChatId] = [];
+            const now = new Date();
+            const timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
 
-                await addDoc(collection(db, `rooms/${currentRoomId}/chats/${currentChatId}/messages`), {
-                    text: text,
-                    sender: 'me',
-                    senderName: currentWorker ? currentWorker.name : 'مستخدم',
-                    timestamp: serverTimestamp()
-                });
+            messages[currentChatId].push({ sender: 'me', text: text, time: timeString });
+            localStorage.setItem(roomKey('messages'), JSON.stringify(messages));
+            input.value = '';
+            renderMessages(currentChatId);
 
-                input.value = '';
-            } catch (error) {
-                console.error(error);
-                showToast('❌ فشل إرسال الرسالة');
-            }
+            setTimeout(() => {
+                if (currentChatId) {
+                    messages[currentChatId].push({ sender: 'other', text: 'تم استلام رسالتك، سأقوم بالرد عليك قريباً.', time: timeString });
+                    localStorage.setItem(roomKey('messages'), JSON.stringify(messages));
+                    renderMessages(currentChatId);
+                }
+            }, 1000);
         }
 
-        async function startChatWith(name, type) {
+        function startChatWith(name, type) {
             const exists = chats.some(c => c.name === name);
             if (exists) {
                 const chat = chats.find(c => c.name === name);
@@ -1092,22 +1134,14 @@
                 return;
             }
 
-            try {
-                const { db, firebaseFuncs } = window;
-                const { collection, addDoc } = firebaseFuncs;
-
-                const newChat = { name: name, type: type, orderId: 'عام', createdAt: Date.now() };
-                const docRef = await addDoc(collection(db, `rooms/${currentRoomId}/chats`), newChat);
-                
-                showView('view-chat');
-                setTimeout(() => {
-                    const items = document.querySelectorAll('.chat-list-item');
-                    if(items[0]) items[0].click();
-                }, 500);
-            } catch (error) {
-                console.error(error);
-                showToast('❌ فشل إنشاء المحادثة');
-            }
+            const newChat = { id: 'chat_' + Date.now(), name: name, type: type, orderId: 'عام' };
+            chats.unshift(newChat);
+            localStorage.setItem(roomKey('chats'), JSON.stringify(chats));
+            showView('view-chat');
+            setTimeout(() => {
+                const items = document.querySelectorAll('.chat-list-item');
+                if(items[0]) items[0].click();
+            }, 100);
         }
 
         function showMessage(elementId, text, color) {
@@ -1119,22 +1153,31 @@
             setTimeout(() => { el.className = 'success-message'; }, 3000);
         }
 
+        // ============================================================
+        //                      عند تحميل الصفحة
+        // ============================================================
         window.onload = function() {
             renderRoomsList();
             
+            // التحقق من وجود غرفة في الرابط
             const hash = window.location.hash;
             const match = hash.match(/room=([A-Z0-9]+)/i);
             if (match) {
                 const roomId = match[1].toUpperCase();
                 const rooms = getSavedRooms();
                 const room = rooms.find(r => r.id === roomId);
-                if (room) enterRoom(room.id, room.name);
+                if (room) {
+                    enterRoom(room.id, room.name);
+                }
             } else {
+                // التحقق من الغرفة النشطة سابقاً
                 const activeRoom = JSON.parse(localStorage.getItem('hirafi_active_room'));
                 if (activeRoom) {
                     const rooms = getSavedRooms();
                     const room = rooms.find(r => r.id === activeRoom.id);
-                    if (room) enterRoom(room.id, room.name);
+                    if (room) {
+                        enterRoom(room.id, room.name);
+                    }
                 }
             }
         };
