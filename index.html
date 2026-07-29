@@ -149,7 +149,7 @@
             <div class="nav-links" id="navLinks">
                 <a onclick="showView('view-home')">السوق الرئيسي</a>
                 <a onclick="showView('view-add-request')" class="btn" style="background: var(--accent); color: white;"><i class="fas fa-plus-circle"></i> أضف طلب خدمة</a>
-                <a onclick="showView('view-worker-board')"><i class="fas fa-briefcase"></i> لوحة الفرص (للحرفيين)</a>
+                <a onclick="showView('view-worker-board')"><i class="fas fa-briefcase"></i> لوحة الفرص</a>
                 <a onclick="showView('view-add-worker')"><i class="fas fa-user-plus"></i> سجل كحرفي</a>
                 <a onclick="showView('view-chat')"><i class="fas fa-comments"></i> الدردشة</a>
             </div>
@@ -160,7 +160,6 @@
     <div class="toast" id="toast"></div>
 
     <main id="app">
-        <!-- الصفحة الرئيسية -->
         <div id="view-home" class="app-view active">
             <section class="hero">
                 <div class="container">
@@ -172,7 +171,6 @@
                     </div>
                 </div>
             </section>
-
             <section>
                 <div class="container">
                     <div class="section-title">
@@ -184,7 +182,6 @@
             </section>
         </div>
 
-        <!-- صفحة تخصص معين -->
         <div id="view-category" class="app-view">
             <section>
                 <div class="container">
@@ -200,7 +197,6 @@
             </section>
         </div>
 
-        <!-- إضافة طلب خدمة (للعملاء) -->
         <div id="view-add-request" class="app-view">
             <section>
                 <div class="container">
@@ -240,7 +236,7 @@
                             </div>
                             <div class="form-group">
                                 <label>وصف المشكلة أو الخدمة المطلوبة <span style="color:var(--accent)">*</span></label>
-                                <textarea id="reqDesc" required placeholder="مثال: مكيف سبليت 18 ألف وحدة لا يبرد، يحتاج تنظيف وفحص فريون..." style="min-height:100px;"></textarea>
+                                <textarea id="reqDesc" required placeholder="مثال: مكيف سبليت 18 ألف وحدة لا يبرد..." style="min-height:100px;"></textarea>
                             </div>
                             <div class="form-group">
                                 <label>الميزانية المقترحة (اختياري)</label>
@@ -254,7 +250,6 @@
             </section>
         </div>
 
-        <!-- لوحة فرص العمل (للحرفيين) -->
         <div id="view-worker-board" class="app-view">
             <section>
                 <div class="container">
@@ -267,7 +262,6 @@
             </section>
         </div>
 
-        <!-- إضافة حرفي -->
         <div id="view-add-worker" class="app-view">
             <section>
                 <div class="container">
@@ -316,7 +310,6 @@
             </section>
         </div>
 
-        <!-- الدردشة -->
         <div id="view-chat" class="app-view">
             <section>
                 <div class="container">
@@ -372,7 +365,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, serverTimestamp, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyApS10K5tWSNLfy51bt_GZzNBNfOzQFbLc",
@@ -388,7 +381,7 @@
         const db = getFirestore(app);
 
         window.db = db;
-        window.firebaseFuncs = { collection, addDoc, onSnapshot, query, where, orderBy, doc, serverTimestamp, getDocs };
+        window.firebaseFuncs = { collection, addDoc, onSnapshot, query, where, orderBy, doc, serverTimestamp, getDocs, deleteDoc };
         console.log('✅ Firebase متصل بنجاح!');
     </script>
 
@@ -412,7 +405,6 @@
             const { db, firebaseFuncs } = window;
             const { collection, onSnapshot, orderBy, query } = firebaseFuncs;
 
-            // الاستماع للحرفيين
             unsubscribeWorkers = onSnapshot(query(collection(db, "workers"), orderBy("createdAt", "desc")), (snapshot) => {
                 workers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderCategories();
@@ -422,7 +414,6 @@
                 }
             });
 
-            // الاستماع للطلبات (فرص العمل)
             unsubscribeRequests = onSnapshot(query(collection(db, "requests"), orderBy("createdAt", "desc")), (snapshot) => {
                 requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 if (document.getElementById('view-worker-board').classList.contains('active')) {
@@ -430,7 +421,6 @@
                 }
             });
 
-            // الاستماع للمحادثات
             unsubscribeChats = onSnapshot(query(collection(db, "chats"), orderBy("createdAt", "desc")), (snapshot) => {
                 chats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderChatList();
@@ -469,10 +459,18 @@
             const filteredWorkers = workers.filter(w => w.specialty === categoryName);
             document.getElementById('category-view-title').innerHTML = `تخصص: <span style="color:var(--secondary-light)">${categoryName}</span>`;
             const grid = document.getElementById('category-workers-grid');
+            
+            // جلب معرفات الحرفيين الذين أضافهم هذا الجهاز
+            const myWorkers = JSON.parse(localStorage.getItem('hirafi_my_workers') || '[]');
+
             if (filteredWorkers.length === 0) {
                 grid.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i><p>لا يوجد حرفيون في هذا التخصص حالياً.</p></div>`;
             } else {
-                grid.innerHTML = filteredWorkers.map(worker => `
+                grid.innerHTML = filteredWorkers.map(worker => {
+                    const isOwner = myWorkers.includes(worker.id);
+                    const deleteBtn = isOwner ? `<button onclick="deleteWorker('${worker.id}')" style="width:100%; margin-top:10px; background:var(--accent); color:white; border:none; padding:8px; border-radius:8px; cursor:pointer; font-family:inherit; font-weight:700;"><i class="fas fa-trash"></i> حذف ملفي</button>` : '';
+                    
+                    return `
                     <div class="card">
                         <div class="worker-header">
                             <div class="avatar-circle">${worker.name.charAt(0)}</div>
@@ -490,8 +488,9 @@
                             <a href="https://wa.me/${worker.phone}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</a>
                             <button class="chat-btn" onclick="startChatWith('${worker.id}', '${worker.name}')"><i class="fas fa-comment"></i> دردشة</button>
                         </div>
+                        ${deleteBtn}
                     </div>
-                `).join('');
+                `}).join('');
             }
             showView('view-category');
         }
@@ -504,7 +503,7 @@
             else showToast('⚠️ لم يتم العثور على هذا التخصص');
         }
 
-        // --- إضافة طلب خدمة ---
+        // --- إضافة وحذف طلب خدمة ---
         async function addRequest(event) {
             event.preventDefault();
             const name = document.getElementById('reqName').value.trim();
@@ -517,10 +516,17 @@
             try {
                 const { db, firebaseFuncs } = window;
                 const { collection, addDoc, serverTimestamp } = firebaseFuncs;
-                await addDoc(collection(db, "requests"), { 
+                
+                const newReqRef = await addDoc(collection(db, "requests"), { 
                     clientName: name, clientPhone: phone, location, specialty, desc, budget,
                     status: 'مفتوح', createdAt: serverTimestamp() 
                 });
+
+                // حفظ معرف الطلب في الجهاز الحالي ليتمكن من حذفه لاحقاً
+                let myRequests = JSON.parse(localStorage.getItem('hirafi_my_requests') || '[]');
+                myRequests.push(newReqRef.id);
+                localStorage.setItem('hirafi_my_requests', JSON.stringify(myRequests));
+
                 document.getElementById('requestForm').reset();
                 showMessage('reqMessage', '✅ تم نشر طلبك بنجاح! سيتواصل معك الحرفيون قريباً.', '#27ae60');
                 setTimeout(() => showView('view-home'), 2500);
@@ -529,17 +535,42 @@
             }
         }
 
+        async function deleteRequest(reqId) {
+            if (!confirm('هل أنت متأكد من حذف هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+            try {
+                const { db, firebaseFuncs } = window;
+                const { deleteDoc, doc } = firebaseFuncs;
+                
+                await deleteDoc(doc(db, "requests", reqId));
+
+                // إزالة معرف الطلب من الجهاز الحالي
+                let myRequests = JSON.parse(localStorage.getItem('hirafi_my_requests') || '[]');
+                myRequests = myRequests.filter(id => id !== reqId);
+                localStorage.setItem('hirafi_my_requests', JSON.stringify(myRequests));
+
+                showToast('✅ تم حذف الطلب بنجاح');
+            } catch (error) {
+                console.error(error);
+                showToast('❌ فشل حذف الطلب');
+            }
+        }
+
         // --- لوحة فرص العمل ---
         function renderRequestsBoard() {
             const grid = document.getElementById('requestsGrid');
             const openRequests = requests.filter(r => r.status === 'مفتوح');
+            const myRequests = JSON.parse(localStorage.getItem('hirafi_my_requests') || '[]');
             
             if (openRequests.length === 0) {
-                grid.innerHTML = `<div class="empty-state"><i class="fas fa-clipboard-check"></i><p>لا توجد طلبات جديدة حالياً.</p><p style="font-size:13px; margin-top:10px;">تحقق لاحقاً، يتم تحديث اللوحة فوراً!</p></div>`;
+                grid.innerHTML = `<div class="empty-state"><i class="fas fa-clipboard-check"></i><p>لا توجد طلبات جديدة حالياً.</p></div>`;
                 return;
             }
 
-            grid.innerHTML = openRequests.map(req => `
+            grid.innerHTML = openRequests.map(req => {
+                const isOwner = myRequests.includes(req.id);
+                const deleteBtn = isOwner ? `<button onclick="deleteRequest('${req.id}')" style="width:100%; margin-top:10px; background:var(--accent); color:white; border:none; padding:8px; border-radius:8px; cursor:pointer; font-family:inherit; font-weight:700;"><i class="fas fa-trash"></i> حذف هذا الطلب</button>` : '';
+
+                return `
                 <div class="card">
                     <div class="request-header">
                         <div class="avatar-circle" style="background: linear-gradient(135deg, var(--accent), var(--accent-light));">${req.clientName.charAt(0)}</div>
@@ -561,11 +592,12 @@
                         <a href="https://wa.me/${req.clientPhone}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</a>
                         <button class="chat-btn" onclick="startChatWith('req_${req.id}', '${req.clientName}')"><i class="fas fa-comment"></i> دردشة</button>
                     </div>
+                    ${deleteBtn}
                 </div>
-            `).join('');
+            `}).join('');
         }
 
-        // --- إضافة حرفي ---
+        // --- إضافة وحذف حرفي ---
         async function addWorker(event) {
             event.preventDefault();
             const name = document.getElementById('workerName').value.trim();
@@ -576,12 +608,39 @@
             try {
                 const { db, firebaseFuncs } = window;
                 const { collection, addDoc, serverTimestamp } = firebaseFuncs;
-                await addDoc(collection(db, "workers"), { name, phone, address, specialty, createdAt: serverTimestamp() });
+                
+                const newWorkerRef = await addDoc(collection(db, "workers"), { name, phone, address, specialty, createdAt: serverTimestamp() });
+                
+                // حفظ معرف الحرفي في الجهاز الحالي
+                let myWorkers = JSON.parse(localStorage.getItem('hirafi_my_workers') || '[]');
+                myWorkers.push(newWorkerRef.id);
+                localStorage.setItem('hirafi_my_workers', JSON.stringify(myWorkers));
+
                 document.getElementById('workerAddForm').reset();
                 showMessage('workerAddMessage', '✅ تم نشر ملفك بنجاح! أنت الآن مرئي لجميع العملاء.', '#27ae60');
                 setTimeout(() => showView('view-home'), 2000);
             } catch (error) {
                 showMessage('workerAddMessage', '❌ حدث خطأ: ' + error.message, '#c0392b');
+            }
+        }
+
+        async function deleteWorker(workerId) {
+            if (!confirm('هل أنت متأكد من حذف ملفك كحرفي؟')) return;
+            try {
+                const { db, firebaseFuncs } = window;
+                const { deleteDoc, doc } = firebaseFuncs;
+                
+                await deleteDoc(doc(db, "workers", workerId));
+
+                let myWorkers = JSON.parse(localStorage.getItem('hirafi_my_workers') || '[]');
+                myWorkers = myWorkers.filter(id => id !== workerId);
+                localStorage.setItem('hirafi_my_workers', JSON.stringify(myWorkers));
+
+                showToast('✅ تم حذف الملف بنجاح');
+                showView('view-home');
+            } catch (error) {
+                console.error(error);
+                showToast('❌ فشل حذف الملف');
             }
         }
 
