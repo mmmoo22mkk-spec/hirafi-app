@@ -35,9 +35,11 @@
             background-size: 400% 400%;
             animation: gradientShift 15s ease infinite;
             z-index: 10000;
-            display: flex; align-items: center; justify-content: center;
+            display: none; /* تم التعديل ليكون مخفياً افتراضياً */
+            align-items: center; justify-content: center;
             padding: 20px; overflow-y: auto;
         }
+        .auth-overlay.active { display: flex; }
         [data-theme="light"] .auth-overlay {
             background: linear-gradient(-45deg, #e0e7ff, #dbeafe, #f0f4f8, #e0f2fe);
             background-size: 400% 400%;
@@ -93,6 +95,12 @@
             margin-bottom: 5px;
         }
         .auth-logo p { color: var(--text-muted); font-size: 14px; }
+
+        .auth-close-btn {
+            position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.3); color: white; border: none;
+            width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 16px; z-index: 2;
+            display: flex; align-items: center; justify-content: center;
+        }
 
         .auth-tabs {
             display: flex; gap: 8px; margin-bottom: 25px;
@@ -675,6 +683,7 @@
 
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-container">
+            <button class="auth-close-btn" onclick="closeAuthOverlay()"><i class="fas fa-times"></i></button>
             <div class="auth-logo">
                 <div class="auth-logo-icon"><i class="fas fa-tools"></i></div>
                 <h1>حِرَفي</h1>
@@ -800,8 +809,8 @@
                 </button>
             </div>
 
-            <button class="guest-btn" onclick="continueAsGuest()">
-                <i class="fas fa-user-secret"></i> المتابعة كضيف (بدون تسجيل)
+            <button class="guest-btn" id="guestBtn" onclick="continueAsGuest()">
+                <i class="fas fa-user-secret"></i> المتابعة كضيف
             </button>
         </div>
     </div>
@@ -819,9 +828,12 @@
                 <a onclick="showView('view-add-worker')"><i class="fas fa-user-plus"></i> سجل كحرفي</a>
                 <a onclick="showView('view-chat')"><i class="fas fa-comments"></i> الدردشة</a>
                 <a onclick="showView('view-favorites')"><i class="fas fa-heart"></i> المفضلة</a>
+                <button class="btn btn-outline" id="navAuthBtn" onclick="showAuthOverlay()" style="display: none;">
+                    <i class="fas fa-sign-in-alt"></i> دخول / تسجيل
+                </button>
                 <div class="user-menu" onclick="toggleUserMenu()">
-                    <div class="user-avatar-small" id="userAvatarSmall">ض</div>
-                    <div class="user-name-small" id="userNameSmall">ضيف</div>
+                    <div class="user-avatar-small" id="userAvatarSmall">ز</div>
+                    <div class="user-name-small" id="userNameSmall">زائر</div>
                 </div>
                 <button class="btn btn-outline" onclick="toggleTheme()" style="padding: 6px 12px; font-size: 13px;">
                     <i class="fas fa-adjust"></i> المظهر
@@ -1075,10 +1087,9 @@
     </footer>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, serverTimestamp, getDocs, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { getAuth, signInAnonymously, signInWithPhoneNumber, RecaptchaVerifier, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
+        // ============================================
+        // FIREBASE CONFIG AND INITIALIZATION
+        // ============================================
         const firebaseConfig = {
             apiKey: "AIzaSyApS10K5tWSNLfy51bt_GZzNBNfOzQFbLc",
             authDomain: "asmar-c5a76.firebaseapp.com",
@@ -1089,40 +1100,90 @@
             measurementId: "G-HSEKEZ92B"
         };
 
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { 
+            getFirestore, collection, addDoc, onSnapshot, query, where, 
+            orderBy, doc, serverTimestamp, getDocs, deleteDoc, setDoc,
+            updateDoc, getDoc
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { 
+            getAuth, signInAnonymously, signInWithPhoneNumber, RecaptchaVerifier,
+            createUserWithEmailAndPassword, signInWithEmailAndPassword,
+            signInWithPopup, GoogleAuthProvider, updateProfile, 
+            onAuthStateChanged, signOut, sendEmailVerification
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        window.db = db;
-        window.auth = auth;
-        window.firebaseFuncs = { collection, addDoc, onSnapshot, query, where, orderBy, doc, serverTimestamp, getDocs, deleteDoc, setDoc };
-        window.firebaseAuth = { signInAnonymously, signInWithPhoneNumber, RecaptchaVerifier, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile, onAuthStateChanged, signOut };
+        // ============================================
+        // GLOBAL VARIABLES
+        // ============================================
+        let currentUser = null;
+        let currentOtpCode = '123456';
+        let otpTimerInterval = null;
+        let workers = [];
+        let requests = [];
+        let chats = [];
+        let messages = {};
+        let currentChatId = null;
+        let myUserId = 'guest_viewer_' + Date.now(); // Default temporary ID for viewers
+        let isGuest = true; // Treat everyone as guest initially until they login
+        let pendingView = null; // To redirect after login
 
+        let unsubscribeWorkers = null;
+        let unsubscribeRequests = null;
+        let unsubscribeChats = null;
+        let unsubscribeMessages = null;
+
+        // ============================================
+        // AUTHENTICATION FUNCTIONS
+        // ============================================
+        
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                window.currentUser = user;
+                currentUser = user;
+                myUserId = user.uid;
+                isGuest = false;
                 localStorage.setItem('hirafi_user', JSON.stringify({
                     uid: user.uid,
                     email: user.email,
                     phone: user.phoneNumber,
                     displayName: user.displayName,
                     photoURL: user.photoURL,
-                    isGuest: user.isAnonymous
+                    isGuest: false
                 }));
                 updateUIForUser(user);
-                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('authOverlay').classList.remove('active');
+                document.getElementById('navAuthBtn').style.display = 'none';
+                
+                if (!unsubscribeWorkers) initMarket();
+                
+                if (pendingView) {
+                    showView(pendingView);
+                    pendingView = null;
+                }
             } else {
-                window.currentUser = null;
-                localStorage.removeItem('hirafi_user');
+                // User is browsing without an account
+                currentUser = null;
+                myUserId = 'guest_viewer_' + Date.now();
+                isGuest = true;
+                updateUIForGuest();
+                document.getElementById('navAuthBtn').style.display = 'inline-flex';
+                
+                // Still load market data for guests
+                if (!unsubscribeWorkers) initMarket();
             }
         });
 
-        console.log('✅ Firebase متصل بنجاح!');
-    </script>
+        function showAuthOverlay() {
+            document.getElementById('authOverlay').classList.add('active');
+        }
 
-    <script>
-        let currentOtpCode = '123456';
-        let otpTimerInterval = null;
+        function closeAuthOverlay() {
+            document.getElementById('authOverlay').classList.remove('active');
+        }
 
         function switchAuthTab(tab) {
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
@@ -1146,6 +1207,88 @@
             document.getElementById('authMessage').innerHTML = `<div class="auth-message ${type}">${msg}</div>`;
             setTimeout(() => { document.getElementById('authMessage').innerHTML = ''; }, 4000);
         }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        async function continueAsGuest() {
+            try {
+                try {
+                    const result = await signInAnonymously(auth);
+                    // onAuthStateChanged will handle the rest
+                    showToast('✅ تم الدخول كضيف');
+                } catch (error) {
+                    console.warn('Anonymous auth failed, falling back to local guest mode:', error);
+                    isGuest = true;
+                    myUserId = 'guest_' + Date.now();
+                    localStorage.setItem('hirafi_guest', 'true');
+                    updateUIForGuest();
+                    closeAuthOverlay();
+                    showToast('✅ تم الدخول كضيف (وضع محلي)');
+                }
+            } catch (error) {
+                console.error('Error in continueAsGuest:', error);
+                showToast('❌ حدث خطأ في الدخول كضيف');
+            }
+        }
+
+        function updateUIForUser(user) {
+            const avatar = document.getElementById('userAvatarSmall');
+            const name = document.getElementById('userNameSmall');
+            
+            if (user.photoURL) {
+                avatar.innerHTML = `<img src="${user.photoURL}" alt="avatar">`;
+            } else if (user.displayName) {
+                avatar.textContent = user.displayName.charAt(0);
+            } else {
+                avatar.textContent = 'م';
+            }
+            
+            name.textContent = user.displayName || (user.isAnonymous ? 'ضيف' : 'مستخدم');
+        }
+
+        function updateUIForGuest() {
+            document.getElementById('userAvatarSmall').textContent = 'ز';
+            document.getElementById('userNameSmall').textContent = 'زائر';
+        }
+
+        function toggleUserMenu() {
+            if (currentUser && !currentUser.isAnonymous) {
+                if (confirm('هل تريد تسجيل الخروج؟')) {
+                    signOut(auth);
+                    localStorage.removeItem('hirafi_user');
+                    isGuest = true;
+                    myUserId = 'guest_viewer_' + Date.now();
+                    showToast('✅ تم تسجيل الخروج');
+                    updateUIForGuest();
+                    document.getElementById('navAuthBtn').style.display = 'inline-flex';
+                }
+            } else if (currentUser && currentUser.isAnonymous) {
+                if (confirm('هل تريد إنشاء حساب حقيقي بدلاً من حساب الضيف؟')) {
+                    showAuthOverlay();
+                }
+            } else {
+                showAuthOverlay();
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('hirafi_theme', newTheme);
+        }
+
+        const savedTheme = localStorage.getItem('hirafi_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        // ============================================
+        // OTP FUNCTIONS
+        // ============================================
 
         async function sendOTP(event) {
             event.preventDefault();
@@ -1229,20 +1372,17 @@
                 showAuthMessage('✅ تم التحقق بنجاح! جاري الدخول...', 'success');
                 
                 try {
-                    const result = await window.firebaseAuth.signInAnonymously(window.auth);
-                    await window.firebaseAuth.updateProfile(result.user, {
-                        displayName: 'مستخدم ' + document.getElementById('authPhone').value.slice(-4),
-                        photoURL: null
+                    const result = await signInAnonymously(auth);
+                    await updateProfile(result.user, {
+                        displayName: 'مستخدم ' + document.getElementById('authPhone').value.slice(-4)
                     });
                     
-                    await window.firebaseFuncs.setDoc(window.firebaseFuncs.doc(window.db, 'users', result.user.uid), {
+                    await setDoc(doc(db, 'users', result.user.uid), {
                         phone: document.getElementById('authPhone').value,
-                        createdAt: window.firebaseFuncs.serverTimestamp()
+                        createdAt: serverTimestamp()
                     });
                     
-                    setTimeout(() => {
-                        document.getElementById('authOverlay').style.display = 'none';
-                    }, 1000);
+                    // onAuthStateChanged handles the rest
                 } catch (error) {
                     showAuthMessage('❌ فشل تسجيل الدخول: ' + error.message, 'error');
                 }
@@ -1253,16 +1393,20 @@
             }
         }
 
+        // ============================================
+        // EMAIL AUTH FUNCTIONS
+        // ============================================
+
         async function emailLogin(event) {
             event.preventDefault();
             const email = document.getElementById('authEmail').value.trim();
             const password = document.getElementById('authPassword').value;
 
             try {
-                await window.firebaseAuth.signInWithEmailAndPassword(window.auth, email, password);
+                await signInWithEmailAndPassword(auth, email, password);
                 showAuthMessage('✅ تم تسجيل الدخول بنجاح!', 'success');
             } catch (error) {
-                showAuthMessage(' ' + getAuthError(error.code), 'error');
+                showAuthMessage('❌ ' + getAuthError(error.code), 'error');
             }
         }
 
@@ -1274,14 +1418,14 @@
             const password = document.getElementById('regPassword').value;
 
             try {
-                const result = await window.firebaseAuth.createUserWithEmailAndPassword(window.auth, email, password);
-                await window.firebaseAuth.updateProfile(result.user, { displayName: name });
+                const result = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(result.user, { displayName: name });
                 
-                await window.firebaseFuncs.setDoc(window.firebaseFuncs.doc(window.db, 'users', result.user.uid), {
+                await setDoc(doc(db, 'users', result.user.uid), {
                     name: name,
                     email: email,
                     phone: phone,
-                    createdAt: window.firebaseFuncs.serverTimestamp()
+                    createdAt: serverTimestamp()
                 });
                 
                 showAuthMessage('✅ تم إنشاء الحساب بنجاح!', 'success');
@@ -1292,47 +1436,12 @@
 
         async function googleLogin() {
             try {
-                const provider = new window.firebaseAuth.GoogleAuthProvider();
-                await window.firebaseAuth.signInWithPopup(window.auth, provider);
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
                 showAuthMessage('✅ تم تسجيل الدخول بـ Google!', 'success');
             } catch (error) {
                 showAuthMessage('❌ فشل تسجيل الدخول: ' + error.message, 'error');
             }
-        }
-
-        function continueAsGuest() {
-            console.log('🔵 Guest button clicked');
-            
-            const overlay = document.getElementById('authOverlay');
-            if (overlay) {
-                overlay.style.display = 'none';
-                console.log('✅ Overlay hidden');
-            }
-            
-            const guestData = {
-                uid: 'guest_' + Date.now(),
-                displayName: 'ضيف',
-                isGuest: true,
-                isAnonymous: true
-            };
-            
-            localStorage.setItem('hirafi_guest', 'true');
-            localStorage.setItem('hirafi_user', JSON.stringify(guestData));
-            
-            const userAvatar = document.getElementById('userAvatarSmall');
-            const userName = document.getElementById('userNameSmall');
-            
-            if (userAvatar) userAvatar.textContent = 'ض';
-            if (userName) userName.textContent = 'ضيف';
-            
-            const toast = document.getElementById('toast');
-            if (toast) {
-                toast.textContent = '✅ تم الدخول كضيف';
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 3000);
-            }
-            
-            console.log('✅ Guest mode activated');
         }
 
         function showRegister() {
@@ -1352,79 +1461,45 @@
                 'auth/email-already-in-use': 'البريد مستخدم بالفعل',
                 'auth/weak-password': 'كلمة المرور ضعيفة (6 أحرف على الأقل)',
                 'auth/invalid-email': 'البريد الإلكتروني غير صحيح',
-                'auth/too-many-requests': 'محاولات كثيرة، حاول لاحقاً'
+                'auth/too-many-requests': 'محاولات كثيرة، حاول لاحقاً',
+                'auth/network-request-failed': 'فشل الاتصال بالشبكة'
             };
-            return errors[code] || 'حدث خطأ';
+            return errors[code] || 'حدث خطأ: ' + code;
         }
 
-        function updateUIForUser(user) {
-            const avatar = document.getElementById('userAvatarSmall');
-            const name = document.getElementById('userNameSmall');
-            
-            if (user.photoURL) {
-                avatar.innerHTML = `<img src="${user.photoURL}" alt="avatar">`;
-            } else {
-                avatar.textContent = (user.displayName || 'ض').charAt(0);
-            }
-            name.textContent = user.displayName || (user.isAnonymous ? 'ضيف' : 'مستخدم');
-        }
+        // Expose functions to global scope
+        window.showAuthOverlay = showAuthOverlay;
+        window.closeAuthOverlay = closeAuthOverlay;
+        window.switchAuthTab = switchAuthTab;
+        window.continueAsGuest = continueAsGuest;
+        window.toggleUserMenu = toggleUserMenu;
+        window.toggleTheme = toggleTheme;
+        window.sendOTP = sendOTP;
+        window.verifyOTP = verifyOTP;
+        window.resendOTP = resendOTP;
+        window.moveOtp = moveOtp;
+        window.backOtp = backOtp;
+        window.emailLogin = emailLogin;
+        window.emailRegister = emailRegister;
+        window.googleLogin = googleLogin;
+        window.showRegister = showRegister;
+        window.showLogin = showLogin;
 
-        function toggleUserMenu() {
-            if (window.currentUser && !window.currentUser.isAnonymous) {
-                if (confirm('هل تريد تسجيل الخروج؟')) {
-                    window.firebaseAuth.signOut(window.auth);
-                    location.reload();
-                }
-            } else {
-                document.getElementById('authOverlay').style.display = 'flex';
-            }
-        }
-
-        function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('hirafi_theme', newTheme);
-        }
-
-        const savedTheme = localStorage.getItem('hirafi_theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-
-        const categories = [
-            { name: 'كهرباء', icon: 'fa-bolt' }, { name: 'سباكة', icon: 'fa-wrench' },
-            { name: 'بناء', icon: 'fa-hard-hat' }, { name: 'لياسة', icon: 'fa-paint-roller' },
-            { name: 'بلاط', icon: 'fa-th-large' }, { name: 'دهانات', icon: 'fa-palette' },
-            { name: 'نجارة', icon: 'fa-hammer' }, { name: 'حدادة', icon: 'fa-fire' },
-            { name: 'تبريد', icon: 'fa-snowflake' }, { name: 'أخرى', icon: 'fa-tools' }
-        ];
-
-        let workers = [], requests = [], chats = [], messages = {};
-        let currentChatId = null;
-        let unsubscribeWorkers = null, unsubscribeRequests = null, unsubscribeChats = null, unsubscribeMessages = null;
-
-        function initMarket() {
-            const { db, firebaseFuncs } = window;
-            const { collection, onSnapshot, orderBy, query } = firebaseFuncs;
-
-            unsubscribeWorkers = onSnapshot(query(collection(db, "workers"), orderBy("createdAt", "desc")), (snapshot) => {
-                workers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderCategories();
-                const activeCategory = document.getElementById('category-view-title').textContent.replace('تخصص: ', '').trim();
-                if (activeCategory && document.getElementById('view-category').classList.contains('active')) openCategoryPage(activeCategory);
-            });
-
-            unsubscribeRequests = onSnapshot(query(collection(db, "requests"), orderBy("createdAt", "desc")), (snapshot) => {
-                requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (document.getElementById('view-worker-board').classList.contains('active')) renderRequestsBoard();
-            });
-
-            unsubscribeChats = onSnapshot(query(collection(db, "chats"), orderBy("createdAt", "desc")), (snapshot) => {
-                chats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderChatList();
-            });
-        }
+        // ============================================
+        // NAVIGATION FUNCTIONS
+        // ============================================
 
         function showView(viewId) {
+            // Actions that require an account (even anonymous)
+            const protectedViews = ['view-add-request', 'view-add-worker', 'view-chat', 'view-favorites'];
+            
+            if (protectedViews.includes(viewId) && !currentUser) {
+                pendingView = viewId;
+                showToast('⚠️ الرجاء تسجيل الدخول أو المتابعة كضيف للقيام بهذا الإجراء');
+                showAuthOverlay();
+                return;
+            }
+            
             document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1442,21 +1517,111 @@
             if (viewId === 'view-favorites') renderFavorites();
         }
 
-        function toggleMenu() { document.getElementById('navLinks').classList.toggle('active'); }
+        function toggleMenu() { 
+            document.getElementById('navLinks').classList.toggle('active'); 
+        }
+
         function toggleMobileChatList() {
             document.getElementById('chatListSide').classList.add('mobile-show');
             document.getElementById('chatWindowIntegrated').classList.add('mobile-hide');
             document.getElementById('backToChatsBtn').style.display = 'none';
         }
 
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg; toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+        window.showView = showView;
+        window.toggleMenu = toggleMenu;
+        window.toggleMobileChatList = toggleMobileChatList;
+
+        // ============================================
+        // MARKET DATA FUNCTIONS
+        // ============================================
+
+        const categories = [
+            { name: 'كهرباء', icon: 'fa-bolt' }, { name: 'سباكة', icon: 'fa-wrench' },
+            { name: 'بناء', icon: 'fa-hard-hat' }, { name: 'لياسة', icon: 'fa-paint-roller' },
+            { name: 'بلاط', icon: 'fa-th-large' }, { name: 'دهانات', icon: 'fa-palette' },
+            { name: 'نجارة', icon: 'fa-hammer' }, { name: 'حدادة', icon: 'fa-fire' },
+            { name: 'تبريد', icon: 'fa-snowflake' }, { name: 'أخرى', icon: 'fa-tools' }
+        ];
+
+        function initMarket() {
+            if (unsubscribeWorkers) return;
+
+            try {
+                const workersQuery = query(collection(db, "workers"), orderBy("createdAt", "desc"));
+                unsubscribeWorkers = onSnapshot(workersQuery, (snapshot) => {
+                    workers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    localStorage.setItem('hirafi_workers_local', JSON.stringify(workers));
+                    renderCategories();
+                    renderFavorites();
+                    const activeCategory = document.getElementById('category-view-title')?.textContent?.replace('تخصص: ', '').trim();
+                    if (activeCategory && document.getElementById('view-category').classList.contains('active')) {
+                        openCategoryPage(activeCategory);
+                    }
+                }, (error) => {
+                    console.warn('Firebase workers error, using local data:', error);
+                    loadLocalWorkers();
+                });
+
+                const requestsQuery = query(collection(db, "requests"), orderBy("createdAt", "desc"));
+                unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
+                    requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    localStorage.setItem('hirafi_requests_local', JSON.stringify(requests));
+                    if (document.getElementById('view-worker-board').classList.contains('active')) {
+                        renderRequestsBoard();
+                    }
+                }, (error) => {
+                    console.warn('Firebase requests error, using local data:', error);
+                    loadLocalRequests();
+                });
+
+                const chatsQuery = query(collection(db, "chats"), orderBy("createdAt", "desc"));
+                unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
+                    chats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    if (document.getElementById('view-chat').classList.contains('active')) {
+                        renderChatList();
+                    }
+                }, (error) => {
+                    console.warn('Firebase chats error:', error);
+                });
+            } catch (error) {
+                console.warn('Firebase init failed, using local data:', error);
+                loadLocalWorkers();
+                loadLocalRequests();
+            }
+        }
+
+        function loadLocalWorkers() {
+            const saved = localStorage.getItem('hirafi_workers_local');
+            if (saved) {
+                workers = JSON.parse(saved);
+            } else {
+                workers = [
+                    { id: 'demo1', name: 'أحمد محمد', phone: '0555123456', address: 'الرياض - حي النخيل', specialty: 'كهرباء', createdAt: new Date() },
+                    { id: 'demo2', name: 'خالد علي', phone: '0555234567', address: 'جدة - حي الروضة', specialty: 'سباكة', createdAt: new Date() },
+                    { id: 'demo3', name: 'محمد سعيد', phone: '0555345678', address: 'الدمام - حي الشاطئ', specialty: 'بناء', createdAt: new Date() }
+                ];
+                localStorage.setItem('hirafi_workers_local', JSON.stringify(workers));
+            }
+            renderCategories();
+            renderFavorites();
+        }
+
+        function loadLocalRequests() {
+            const saved = localStorage.getItem('hirafi_requests_local');
+            if (saved) {
+                requests = JSON.parse(saved);
+            } else {
+                requests = [];
+                localStorage.setItem('hirafi_requests_local', JSON.stringify(requests));
+            }
+            if (document.getElementById('view-worker-board').classList.contains('active')) {
+                renderRequestsBoard();
+            }
         }
 
         function renderCategories() {
             const grid = document.getElementById('categoriesGrid');
+            if (!grid) return;
             grid.innerHTML = categories.map(cat => {
                 const count = workers.filter(w => w.specialty === cat.name).length;
                 return `<div class="category-card" onclick="openCategoryPage('${cat.name}')">
@@ -1508,6 +1673,11 @@
         }
 
         function toggleFavorite(workerId, btn) {
+            if (!currentUser) {
+                showToast('⚠️ الرجاء تسجيل الدخول لحفظ المفضلة');
+                showAuthOverlay();
+                return;
+            }
             let favorites = JSON.parse(localStorage.getItem('hirafi_favorites') || '[]');
             if (favorites.includes(workerId)) {
                 favorites = favorites.filter(id => id !== workerId);
@@ -1525,6 +1695,7 @@
 
         function renderFavorites() {
             const grid = document.getElementById('favoritesGrid');
+            if (!grid) return;
             const favorites = JSON.parse(localStorage.getItem('hirafi_favorites') || '[]');
             const favoriteWorkers = workers.filter(w => favorites.includes(w.id));
             
@@ -1562,6 +1733,14 @@
             else showToast('⚠️ لم يتم العثور على هذا التخصص');
         }
 
+        window.openCategoryPage = openCategoryPage;
+        window.toggleFavorite = toggleFavorite;
+        window.searchCategory = searchCategory;
+
+        // ============================================
+        // REQUEST FUNCTIONS
+        // ============================================
+
         async function addRequest(event) {
             event.preventDefault();
             const name = document.getElementById('reqName').value.trim();
@@ -1572,18 +1751,17 @@
             const budget = document.getElementById('reqBudget').value.trim() || 'قابل للنقاش';
 
             try {
-                const { db, firebaseFuncs } = window;
-                const { collection, addDoc, serverTimestamp } = firebaseFuncs;
                 const newReqRef = await addDoc(collection(db, "requests"), { 
                     clientName: name, clientPhone: phone, location, specialty, desc, budget,
-                    status: 'مفتوح', createdAt: serverTimestamp() 
+                    status: 'مفتوح', createdAt: serverTimestamp(),
+                    ownerId: myUserId
                 });
                 let myRequests = JSON.parse(localStorage.getItem('hirafi_my_requests') || '[]');
                 myRequests.push(newReqRef.id);
                 localStorage.setItem('hirafi_my_requests', JSON.stringify(myRequests));
                 document.getElementById('requestForm').reset();
                 showMessage('reqMessage', '✅ تم نشر طلبك بنجاح!', '#27ae60');
-                setTimeout(() => showView('view-home'), 2500);
+                setTimeout(() => showView('view-worker-board'), 2500);
             } catch (error) {
                 showMessage('reqMessage', '❌ حدث خطأ: ' + error.message, '#c0392b');
             }
@@ -1592,13 +1770,12 @@
         async function deleteRequest(reqId) {
             if (!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
             try {
-                const { db, firebaseFuncs } = window;
-                const { deleteDoc, doc } = firebaseFuncs;
                 await deleteDoc(doc(db, "requests", reqId));
                 let myRequests = JSON.parse(localStorage.getItem('hirafi_my_requests') || '[]');
                 myRequests = myRequests.filter(id => id !== reqId);
                 localStorage.setItem('hirafi_my_requests', JSON.stringify(myRequests));
                 showToast('✅ تم حذف الطلب بنجاح');
+                renderRequestsBoard();
             } catch (error) {
                 showToast('❌ فشل حذف الطلب');
             }
@@ -1606,6 +1783,7 @@
 
         function renderRequestsBoard() {
             const grid = document.getElementById('requestsGrid');
+            if (!grid) return;
             const openRequests = requests.filter(r => r.status === 'مفتوح');
             const myRequests = JSON.parse(localStorage.getItem('hirafi_my_requests') || '[]');
             
@@ -1615,7 +1793,7 @@
             }
 
             grid.innerHTML = openRequests.map(req => {
-                const isOwner = myRequests.includes(req.id);
+                const isOwner = myRequests.includes(req.id) || req.ownerId === myUserId;
                 const deleteBtn = isOwner ? `<button onclick="deleteRequest('${req.id}')" style="width:100%; margin-top:10px; background:var(--accent); color:white; border:none; padding:8px; border-radius:8px; cursor:pointer; font-family:inherit; font-weight:700;"><i class="fas fa-trash"></i> حذف هذا الطلب</button>` : '';
                 return `
                 <div class="card">
@@ -1643,6 +1821,13 @@
             }).join('');
         }
 
+        window.addRequest = addRequest;
+        window.deleteRequest = deleteRequest;
+
+        // ============================================
+        // WORKER FUNCTIONS
+        // ============================================
+
         async function addWorker(event) {
             event.preventDefault();
             const name = document.getElementById('workerName').value.trim();
@@ -1651,12 +1836,15 @@
             const specialty = document.getElementById('workerSpecialty').value;
 
             try {
-                const { db, firebaseFuncs } = window;
-                const { collection, addDoc, serverTimestamp } = firebaseFuncs;
-                const newWorkerRef = await addDoc(collection(db, "workers"), { name, phone, address, specialty, createdAt: serverTimestamp() });
+                const newWorkerRef = await addDoc(collection(db, "workers"), { 
+                    name, phone, address, specialty, 
+                    createdAt: serverTimestamp(),
+                    ownerId: myUserId
+                });
                 let myWorkers = JSON.parse(localStorage.getItem('hirafi_my_workers') || '[]');
                 myWorkers.push(newWorkerRef.id);
                 localStorage.setItem('hirafi_my_workers', JSON.stringify(myWorkers));
+                
                 document.getElementById('workerAddForm').reset();
                 showMessage('workerAddMessage', '✅ تم نشر ملفك بنجاح!', '#27ae60');
                 setTimeout(() => showView('view-home'), 2000);
@@ -1668,8 +1856,6 @@
         async function deleteWorker(workerId) {
             if (!confirm('هل أنت متأكد من حذف ملفك كحرفي؟')) return;
             try {
-                const { db, firebaseFuncs } = window;
-                const { deleteDoc, doc } = firebaseFuncs;
                 await deleteDoc(doc(db, "workers", workerId));
                 let myWorkers = JSON.parse(localStorage.getItem('hirafi_my_workers') || '[]');
                 myWorkers = myWorkers.filter(id => id !== workerId);
@@ -1695,16 +1881,17 @@
             } else { addressInput.value = 'غير مدعوم.'; }
         }
 
-        function showMessage(elementId, text, color) {
-            const el = document.getElementById(elementId);
-            el.textContent = text; el.style.borderColor = color; el.style.color = color;
-            el.className = 'success-message show';
-            setTimeout(() => { el.className = 'success-message'; }, 4000);
-        }
+        window.addWorker = addWorker;
+        window.deleteWorker = deleteWorker;
+        window.addAddressAuto = addAddressAuto;
+
+        // ============================================
+        // PROFILE FUNCTIONS
+        // ============================================
 
         function showProfileDetails(personData, type) {
             const card = document.getElementById('profileCard');
-            const avatar = personData.name.charAt(0);
+            const avatar = personData.name ? personData.name.charAt(0) : '?';
             const statusBadge = type === 'worker' ? 
                 `<span class="profile-status"><i class="fas fa-check-circle"></i> متاح للعمل</span>` :
                 `<span class="profile-status" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:#3b82f6"><i class="fas fa-user-circle"></i> عميل</span>`;
@@ -1712,16 +1899,16 @@
             card.innerHTML = `
                 <div class="profile-header">
                     <div class="profile-avatar-large">${avatar}</div>
-                    <h1 class="profile-name">${personData.name}</h1>
+                    <h1 class="profile-name">${personData.name || 'غير محدد'}</h1>
                     ${statusBadge}
                 </div>
                 <div class="profile-details">
-                    ${type === 'worker' ? `
+                    ${type === 'worker' && personData.specialty ? `
                     <div class="detail-item">
                         <div class="detail-icon"><i class="fas fa-briefcase"></i></div>
                         <div class="detail-content">
                             <div class="detail-label">التخصص</div>
-                            <div class="detail-value">${personData.specialty || 'غير محدد'}</div>
+                            <div class="detail-value">${personData.specialty}</div>
                         </div>
                     </div>
                     ` : ''}
@@ -1773,8 +1960,22 @@
             showView('view-profile');
         }
 
+        function showMessage(elementId, text, color) {
+            const el = document.getElementById(elementId);
+            el.textContent = text; el.style.borderColor = color; el.style.color = color;
+            el.className = 'success-message show';
+            setTimeout(() => { el.className = 'success-message'; }, 4000);
+        }
+
+        window.showProfileDetails = showProfileDetails;
+
+        // ============================================
+        // CHAT FUNCTIONS
+        // ============================================
+
         function renderChatList() {
             const container = document.getElementById('chatListItemsSide');
+            if (!container) return;
             const hiddenChats = JSON.parse(localStorage.getItem('hirafi_hidden_chats') || '[]');
             const visibleChats = chats.filter(c => !hiddenChats.includes(c.id));
             
@@ -1784,8 +1985,8 @@
             }
             container.innerHTML = visibleChats.map(chat => `
                 <div class="chat-list-item ${chat.id === currentChatId ? 'active' : ''}" onclick="switchChat('${chat.id}', '${chat.targetName}')">
-                    <div class="avatar">${chat.targetName.charAt(0)}</div>
-                    <div class="chat-info"><div class="name">${chat.targetName}</div></div>
+                    <div class="avatar">${chat.targetName ? chat.targetName.charAt(0) : '?'}</div>
+                    <div class="chat-info"><div class="name">${chat.targetName || 'مستخدم'}</div></div>
                 </div>
             `).join('');
         }
@@ -1803,27 +2004,41 @@
 
             document.getElementById('chatPlaceholder').style.display = 'none';
             document.getElementById('activeChatWindow').style.display = 'flex';
-            document.getElementById('chatHeaderName').textContent = targetName;
-            document.getElementById('chatHeaderAvatar').textContent = targetName.charAt(0);
+            document.getElementById('chatHeaderName').textContent = targetName || 'مستخدم';
+            document.getElementById('chatHeaderAvatar').textContent = targetName ? targetName.charAt(0) : '?';
             subscribeToMessages(chatId);
         }
 
         function subscribeToMessages(chatId) {
-            const { db, firebaseFuncs } = window;
-            const { collection, onSnapshot, orderBy, query } = firebaseFuncs;
-            if (unsubscribeMessages) unsubscribeMessages();
-            const messagesRef = query(collection(db, `chats/${chatId}/messages`), orderBy("timestamp", "asc"));
-            unsubscribeMessages = onSnapshot(messagesRef, (snapshot) => {
-                messages[chatId] = snapshot.docs.map(doc => doc.data());
+            if (unsubscribeMessages) {
+                unsubscribeMessages();
+                unsubscribeMessages = null;
+            }
+            
+            try {
+                const messagesRef = query(collection(db, `chats/${chatId}/messages`), orderBy("timestamp", "asc"));
+                unsubscribeMessages = onSnapshot(messagesRef, (snapshot) => {
+                    messages[chatId] = snapshot.docs.map(doc => doc.data());
+                    renderMessages(chatId);
+                }, (error) => {
+                    console.warn('Firebase messages error:', error);
+                    const localMessages = JSON.parse(localStorage.getItem(`hirafi_messages_${chatId}`) || '[]');
+                    messages[chatId] = localMessages;
+                    renderMessages(chatId);
+                });
+            } catch (error) {
+                console.warn('Error subscribing to messages:', error);
+                const localMessages = JSON.parse(localStorage.getItem(`hirafi_messages_${chatId}`) || '[]');
+                messages[chatId] = localMessages;
                 renderMessages(chatId);
-            });
+            }
         }
 
         function renderMessages(chatId) {
             const container = document.getElementById('chatMessages');
+            if (!container) return;
             container.innerHTML = '';
             const chatMessages = messages[chatId] || [];
-            const { myUserId } = window;
             
             if (chatMessages.length === 0) {
                 container.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:20px; font-size:13px;">ابدأ المحادثة الآن</div>';
@@ -1834,7 +2049,11 @@
                 const div = document.createElement('div');
                 const isMine = msg.senderId === myUserId;
                 div.className = `message-bubble ${isMine ? 'sent' : 'received'}`;
-                const timeStr = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) : '';
+                const timeStr = msg.timestamp ? 
+                    (msg.timestamp.seconds ? 
+                        new Date(msg.timestamp.seconds * 1000).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) :
+                        new Date(msg.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'})
+                    ) : '';
                 
                 let content = '';
                 if (msg.type === 'image') {
@@ -1852,32 +2071,64 @@
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
             if (!text || !currentChatId) return;
+            
             try {
-                const { db, firebaseFuncs, myUserId } = window;
-                const { collection, addDoc, serverTimestamp } = firebaseFuncs;
                 await addDoc(collection(db, `chats/${currentChatId}/messages`), { 
                     text, 
-                    senderId: myUserId,
+                    senderId: myUserId || 'unknown',
                     timestamp: serverTimestamp() 
                 });
                 input.value = '';
-            } catch (error) { showToast('❌ فشل إرسال الرسالة'); }
+            } catch (error) {
+                console.warn('Firebase send failed, using local:', error);
+                if (!messages[currentChatId]) messages[currentChatId] = [];
+                messages[currentChatId].push({
+                    text, 
+                    senderId: myUserId || 'unknown',
+                    timestamp: new Date()
+                });
+                localStorage.setItem(`hirafi_messages_${currentChatId}`, JSON.stringify(messages[currentChatId]));
+                renderMessages(currentChatId);
+                input.value = '';
+            }
         }
 
         async function startChatWith(targetId, targetName) {
+            if (!currentUser) {
+                showToast('⚠️ الرجاء تسجيل الدخول لبدء المحادثة');
+                pendingView = 'view-chat';
+                showAuthOverlay();
+                return;
+            }
+            
             const existingChat = chats.find(c => c.targetId === targetId);
             if (existingChat) {
                 showView('view-chat');
                 setTimeout(() => switchChat(existingChat.id, existingChat.targetName), 300);
                 return;
             }
+            
             try {
-                const { db, firebaseFuncs } = window;
-                const { collection, addDoc, serverTimestamp } = firebaseFuncs;
-                const newChatRef = await addDoc(collection(db, "chats"), { targetId, targetName, createdAt: serverTimestamp() });
+                const newChatRef = await addDoc(collection(db, "chats"), { 
+                    targetId, 
+                    targetName: targetName || 'مستخدم', 
+                    createdAt: serverTimestamp(),
+                    ownerId: myUserId
+                });
                 showView('view-chat');
-                setTimeout(() => switchChat(newChatRef.id, targetName), 500);
-            } catch (error) { showToast('❌ فشل بدء المحادثة'); }
+                setTimeout(() => switchChat(newChatRef.id, targetName || 'مستخدم'), 500);
+            } catch (error) {
+                console.warn('Firebase chat create failed, using local:', error);
+                const newChat = {
+                    id: 'local_' + Date.now(),
+                    targetId: targetId,
+                    targetName: targetName || 'مستخدم',
+                    createdAt: new Date()
+                };
+                chats.push(newChat);
+                showView('view-chat');
+                setTimeout(() => switchChat(newChat.id, newChat.targetName), 500);
+            }
         }
 
         function deleteCurrentChatLocally() {
@@ -1889,6 +2140,8 @@
                 hiddenChats.push(currentChatId);
                 localStorage.setItem('hirafi_hidden_chats', JSON.stringify(hiddenChats));
             }
+            
+            localStorage.removeItem(`hirafi_messages_${currentChatId}`);
             
             currentChatId = null;
             document.getElementById('chatPlaceholder').style.display = 'flex';
@@ -1915,14 +2168,24 @@
                 const imageUrl = await response.text();
                 
                 if (imageUrl && imageUrl.startsWith('http')) {
-                    const { db, firebaseFuncs, myUserId } = window;
-                    const { collection, addDoc, serverTimestamp } = firebaseFuncs;
-                    await addDoc(collection(db, `chats/${currentChatId}/messages`), {
-                        type: 'image',
-                        imageUrl: imageUrl.trim(),
-                        senderId: myUserId,
-                        timestamp: serverTimestamp()
-                    });
+                    try {
+                        await addDoc(collection(db, `chats/${currentChatId}/messages`), {
+                            type: 'image',
+                            imageUrl: imageUrl.trim(),
+                            senderId: myUserId || 'unknown',
+                            timestamp: serverTimestamp()
+                        });
+                    } catch (error) {
+                        if (!messages[currentChatId]) messages[currentChatId] = [];
+                        messages[currentChatId].push({
+                            type: 'image',
+                            imageUrl: imageUrl.trim(),
+                            senderId: myUserId || 'unknown',
+                            timestamp: new Date()
+                        });
+                        localStorage.setItem(`hirafi_messages_${currentChatId}`, JSON.stringify(messages[currentChatId]));
+                        renderMessages(currentChatId);
+                    }
                     showToast('✅ تم إرسال الصورة');
                 } else {
                     showToast('❌ فشل رفع الصورة');
@@ -1934,7 +2197,20 @@
             event.target.value = '';
         }
 
-        window.onload = function() { initMarket(); };
+        window.switchChat = switchChat;
+        window.sendMessage = sendMessage;
+        window.startChatWith = startChatWith;
+        window.deleteCurrentChatLocally = deleteCurrentChatLocally;
+        window.sendImage = sendImage;
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        // Start loading market data immediately for all users
+        initMarket();
+
+        console.log('✅ حِرَفي تطبيق جاهز للاستخدام!');
     </script>
 </body>
 </html>
