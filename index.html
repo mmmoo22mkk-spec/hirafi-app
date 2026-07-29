@@ -1,146 +1,810 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>حِرَفي - سوق العمّال والمقاولات المفتوح</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@700&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --primary: #000000; --primary-light: #1a1a1a; --primary-dark: #0a0a0a;
+            --bg: #0a0a0a; --card-bg: #1a1a1a; --text: #ffffff; --text-muted: #aaaaaa;
+            --primary: #000000; --primary-light: #1a1a1a;
             --secondary: #d4a017; --secondary-light: #f0c040;
             --accent: #c0392b; --accent-light: #e74c3c; --success: #27ae60;
-            --bg: #0a0a0a; --card-bg: #1a1a1a; --text: #ffffff; --text-muted: #aaaaaa;
             --border: #333333; --shadow: 0 4px 20px rgba(212, 160, 23, 0.08);
             --shadow-hover: 0 12px 40px rgba(212, 160, 23, 0.2); --radius: 16px;
-            --transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            --transition: all 0.3s ease;
         }
+        [data-theme="light"] {
+            --bg: #f0f4f8; --card-bg: #ffffff; --text: #1e293b; --text-muted: #64748b;
+            --primary: #2563eb; --primary-light: #3b82f6;
+            --secondary: #3b82f6; --secondary-light: #60a5fa;
+            --accent: #f472b6; --accent-light: #fbcfe8; --success: #10b981;
+            --border: #e2e8f0; --shadow: 0 4px 20px rgba(37, 99, 235, 0.1);
+            --shadow-hover: 0 12px 40px rgba(37, 99, 235, 0.2);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html { scroll-behavior: smooth; }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        body { font-family: 'Tajawal', 'Cairo', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; transition: background 0.5s ease, color 0.5s ease; overflow-x: hidden; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 
-        .app-view { display: none; animation: fadeIn 0.5s ease; padding-top: 20px; }
+        .auth-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(-45deg, #0a0a0a, #1a1a2e, #16213e, #0f3460);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            z-index: 10000;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px; overflow-y: auto;
+        }
+        [data-theme="light"] .auth-overlay {
+            background: linear-gradient(-45deg, #e0e7ff, #dbeafe, #f0f4f8, #e0f2fe);
+            background-size: 400% 400%;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .auth-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px; padding: 40px 30px; max-width: 440px; width: 100%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            animation: authSlideIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative; overflow: hidden;
+        }
+        [data-theme="light"] .auth-container {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 25px 50px rgba(37, 99, 235, 0.15);
+        }
+        @keyframes authSlideIn {
+            from { opacity: 0; transform: translateY(50px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .auth-container::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(212, 160, 23, 0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .auth-logo { text-align: center; margin-bottom: 30px; position: relative; z-index: 1; }
+        .auth-logo-icon {
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            border-radius: 20px; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 15px; font-size: 36px; color: white;
+            animation: logoFloat 3s ease-in-out infinite;
+            box-shadow: 0 10px 30px rgba(212, 160, 23, 0.4);
+        }
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+        .auth-logo h1 {
+            font-family: 'Amiri', serif; font-size: 32px; font-weight: 900;
+            background: linear-gradient(135deg, var(--secondary), var(--accent-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 5px;
+        }
+        .auth-logo p { color: var(--text-muted); font-size: 14px; }
+
+        .auth-tabs {
+            display: flex; gap: 8px; margin-bottom: 25px;
+            background: rgba(0,0,0,0.2); padding: 5px; border-radius: 12px;
+            position: relative; z-index: 1; transition: var(--transition);
+        }
+        [data-theme="light"] .auth-tabs { background: rgba(0,0,0,0.05); }
+        .auth-tab {
+            flex: 1; padding: 12px; text-align: center; border-radius: 8px; cursor: pointer;
+            font-weight: 700; font-size: 13px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: var(--text-muted); position: relative; overflow: hidden;
+        }
+        .auth-tab::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            opacity: 0; transition: opacity 0.3s ease; z-index: -1;
+        }
+        .auth-tab.active { color: white; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(212, 160, 23, 0.3); }
+        .auth-tab.active::before { opacity: 1; }
+        .auth-tab:hover:not(.active) { background: rgba(212, 160, 23, 0.1); color: var(--secondary); }
+
+        .auth-form { position: relative; z-index: 1; animation: formSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .auth-form.hidden { display: none; }
+        @keyframes formSlideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+        .input-group { margin-bottom: 16px; position: relative; }
+        .input-group label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 13px; color: var(--text-muted); }
+        .input-wrapper { position: relative; }
+        .input-wrapper i {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); font-size: 16px; transition: var(--transition);
+        }
+        .input-wrapper input {
+            width: 100%; padding: 14px 45px 14px 14px; border: 2px solid var(--border);
+            border-radius: 12px; background: rgba(255,255,255,0.05);
+            color: var(--text); font-family: inherit; font-size: 14px; transition: var(--transition);
+        }
+        [data-theme="light"] .input-wrapper input { background: rgba(255,255,255,0.8); }
+        .input-wrapper input:focus {
+            outline: none; border-color: var(--secondary); transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 160, 23, 0.2);
+        }
+        .input-wrapper input:focus + i { color: var(--secondary); }
+
+        .otp-inputs { display: flex; gap: 8px; justify-content: center; margin: 20px 0; }
+        .otp-input {
+            width: 50px; height: 55px; border: 2px solid var(--border); border-radius: 12px;
+            background: rgba(255,255,255,0.05); color: var(--text);
+            font-size: 22px; font-weight: 900; text-align: center; transition: var(--transition);
+        }
+        [data-theme="light"] .otp-input { background: rgba(255,255,255,0.8); }
+        .otp-input:focus {
+            outline: none; border-color: var(--secondary); transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(212, 160, 23, 0.3);
+        }
+
+        .auth-btn {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            color: white; border: none; border-radius: 12px;
+            font-weight: 900; font-size: 15px; font-family: inherit;
+            cursor: pointer; transition: var(--transition); margin-top: 10px;
+            position: relative; overflow: hidden;
+        }
+        .auth-btn::after {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0;
+            border-radius: 50%; background: rgba(255,255,255,0.5);
+            transform: translate(-50%, -50%); transition: width 0.5s, height 0.5s;
+        }
+        .auth-btn:hover::after { width: 300px; height: 300px; }
+        .auth-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(212, 160, 23, 0.4); }
+        .auth-btn:active { transform: scale(0.98); }
+        .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .google-btn {
+            width: 100%; padding: 12px; background: white; color: #333;
+            border: 2px solid var(--border); border-radius: 12px;
+            font-weight: 700; font-size: 14px; font-family: inherit;
+            cursor: pointer; transition: var(--transition);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .google-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+
+        .guest-btn {
+            width: 100%; padding: 12px; background: transparent; color: var(--text-muted);
+            border: 2px dashed var(--border); border-radius: 12px;
+            font-weight: 700; font-size: 14px; font-family: inherit;
+            cursor: pointer; transition: var(--transition); margin-top: 10px;
+        }
+        .guest-btn:hover {
+            border-color: var(--secondary); color: var(--secondary);
+            transform: translateY(-2px);
+        }
+        .guest-btn:active { transform: scale(0.98); }
+
+        .auth-message {
+            padding: 12px; border-radius: 10px; margin-bottom: 15px;
+            font-size: 13px; font-weight: 700; text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .auth-message.success { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success); }
+        .auth-message.error { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; }
+
+        .otp-timer { text-align: center; margin-top: 15px; color: var(--text-muted); font-size: 13px; }
+        .otp-timer strong { color: var(--secondary); }
+        .resend-btn {
+            background: none; border: none; color: var(--secondary);
+            font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13px; margin-top: 10px;
+            transition: var(--transition);
+        }
+        .resend-btn:hover:not(:disabled) { transform: translateY(-2px); }
+        .resend-btn:disabled { color: var(--text-muted); cursor: not-allowed; }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 50% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); } }
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-10px) rotate(5deg); } }
+        @keyframes messagePop { 0% { opacity: 0; transform: scale(0.3) translateY(20px); } 50% { transform: scale(1.05); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+
+        .app-view { display: none; animation: fadeInUp 0.5s ease; padding-top: 20px; }
         .app-view.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        .navbar { background: var(--primary); box-shadow: 0 2px 15px rgba(212, 160, 23, 0.12); position: sticky; top: 0; z-index: 1000; border-bottom: 2px solid var(--secondary); }
-        .nav-wrap { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; max-width: 1200px; margin: 0 auto; }
-        .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 24px; color: white; font-family: 'Amiri', serif; text-decoration: none; cursor: pointer; }
-        .logo i { background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); color: var(--primary); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-        .nav-links { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .nav-links a { font-weight: 600; color: rgba(255, 255, 255, 0.85); transition: var(--transition); padding: 6px 14px; border-radius: 8px; font-size: 14px; text-decoration: none; cursor: pointer; }
-        .nav-links a:hover { color: var(--secondary-light); background: rgba(212, 160, 23, 0.08); }
-        .btn { background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); color: var(--primary); padding: 8px 20px; border-radius: 10px; font-weight: 700; border: none; cursor: pointer; transition: var(--transition); font-family: inherit; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
-        .btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 30px rgba(212, 160, 23, 0.4); }
-        .btn-success { background: linear-gradient(135deg, var(--success), #2ecc71); color: white; }
+        .navbar {
+            background: var(--card-bg); box-shadow: var(--shadow);
+            position: sticky; top: 0; z-index: 1000;
+            border-bottom: 2px solid var(--secondary); transition: var(--transition);
+            animation: fadeInDown 0.6s ease;
+        }
+        [data-theme="light"] .navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .nav-wrap { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; max-width: 1200px; margin: 0 auto; }
+        .logo {
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 900; font-size: 22px; color: var(--text);
+            font-family: 'Amiri', serif; text-decoration: none; cursor: pointer; transition: var(--transition);
+        }
+        .logo:hover { transform: scale(1.05); }
+        .logo i {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            color: white; width: 38px; height: 38px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            animation: float 3s ease-in-out infinite;
+        }
+        .nav-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .nav-links a {
+            font-weight: 600; color: var(--text); transition: var(--transition);
+            padding: 8px 14px; border-radius: 8px; font-size: 14px;
+            text-decoration: none; cursor: pointer; position: relative; overflow: hidden;
+        }
+        .nav-links a:hover { background: var(--secondary); color: white; transform: translateY(-2px); }
+        .btn {
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            color: white; padding: 8px 18px; border-radius: 10px; font-weight: 700;
+            border: none; cursor: pointer; transition: var(--transition);
+            font-family: inherit; font-size: 14px; display: inline-flex;
+            align-items: center; gap: 6px; text-decoration: none;
+        }
+        .btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); }
+        .btn:active { transform: scale(0.96); }
+        .btn-success { background: linear-gradient(135deg, var(--success), #34d399); color: white; }
         .btn-outline { background: transparent; border: 2px solid var(--secondary); color: var(--secondary); }
-        .btn-outline:hover { background: var(--secondary); color: var(--primary); }
-        .menu-toggle { display: none; background: none; border: none; font-size: 22px; color: white; cursor: pointer; }
+        .btn-outline:hover { background: var(--secondary); color: white; }
+        .menu-toggle { display: none; background: none; border: none; font-size: 22px; color: var(--text); cursor: pointer; padding: 8px; }
 
-        .hero { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; padding: 60px 0 70px; position: relative; overflow: hidden; border-bottom: 3px solid var(--secondary); text-align: center; }
-        .hero h1 { font-size: 38px; font-weight: 900; margin-bottom: 15px; }
-        .hero h1 span { color: var(--secondary-light); }
-        .hero p { font-size: 17px; opacity: 0.9; margin-bottom: 25px; color: rgba(255, 255, 255, 0.85); }
-        .search-box { background: rgba(255, 255, 255, 0.06); backdrop-filter: blur(10px); border: 2px solid rgba(212, 160, 23, 0.2); border-radius: 14px; padding: 6px; display: flex; gap: 6px; max-width: 500px; margin: 0 auto; }
-        .search-box input { flex: 1; border: none; padding: 12px 18px; font-size: 15px; font-family: inherit; outline: none; background: rgba(255, 255, 255, 0.9); color: var(--primary); border-radius: 10px; }
+        .user-menu {
+            display: flex; align-items: center; gap: 10px;
+            cursor: pointer; padding: 6px 12px; border-radius: 10px;
+            transition: var(--transition);
+        }
+        .user-menu:hover { background: rgba(128,128,128,0.1); }
+        .user-avatar-small {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 14px; overflow: hidden;
+        }
+        .user-avatar-small img { width: 100%; height: 100%; object-fit: cover; }
+        .user-name-small {
+            font-weight: 700; font-size: 13px;
+            max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
 
-        section { padding: 50px 0; }
-        .section-title { text-align: center; margin-bottom: 35px; }
-        .section-title h2 { font-size: 30px; font-weight: 900; color: var(--text); position: relative; display: inline-block; }
-        .section-title h2::after { content: ''; display: block; width: 60px; height: 3px; margin: 12px auto 0; background: linear-gradient(90deg, var(--secondary), var(--accent)); border-radius: 4px; }
-        .section-title p { color: var(--text-muted); font-size: 15px; margin-top: 8px; }
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white; padding: 50px 0 60px; position: relative; overflow: hidden;
+            border-bottom: 3px solid var(--secondary); text-align: center;
+        }
+        [data-theme="light"] .hero {
+            background: linear-gradient(-45deg, #2563eb, #3b82f6, #60a5fa, #93c5fd);
+            background-size: 400% 400%; animation: gradientShift 8s ease infinite;
+        }
+        .hero::before {
+            content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+        .hero h1 { font-size: 32px; font-weight: 900; margin-bottom: 12px; animation: fadeInUp 0.8s ease; }
+        [data-theme="light"] .hero h1 span {
+            background: linear-gradient(90deg, #f472b6, #fbcfe8, #f472b6);
+            background-size: 200% auto; -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; background-clip: text;
+            animation: gradientShift 3s ease infinite;
+        }
+        .hero p { font-size: 16px; opacity: 0.9; margin-bottom: 20px; animation: fadeInUp 1s ease; }
+        .search-box {
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 14px;
+            padding: 6px; display: flex; gap: 6px; max-width: 500px; margin: 0 auto;
+            animation: fadeInUp 1.2s ease; transition: var(--transition);
+        }
+        .search-box:hover { transform: scale(1.02); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .search-box input {
+            flex: 1; border: none; padding: 12px 16px; font-size: 15px;
+            font-family: inherit; outline: none; background: rgba(255, 255, 255, 0.95);
+            color: #000; border-radius: 10px;
+        }
 
-        .categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
-        .category-card { background: var(--card-bg); padding: 25px 15px; border-radius: var(--radius); text-align: center; cursor: pointer; transition: var(--transition); border: 2px solid var(--border); }
-        .category-card:hover { transform: translateY(-6px) scale(1.02); border-color: var(--secondary); box-shadow: var(--shadow-hover); }
-        .category-icon { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #1a1a1a, #2d2d2d); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 24px; color: var(--secondary); transition: var(--transition); border: 1px solid var(--border); }
-        .category-card:hover .category-icon { background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); color: var(--primary); transform: rotate(-8deg) scale(1.1); }
-        .category-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-        .category-card span { color: var(--text-muted); font-size: 13px; }
+        section { padding: 40px 0; }
+        .section-title { text-align: center; margin-bottom: 30px; }
+        .section-title h2 {
+            font-size: 26px; font-weight: 900; color: var(--text);
+            position: relative; display: inline-block; animation: fadeInUp 0.6s ease;
+        }
+        [data-theme="light"] .section-title h2 {
+            background: linear-gradient(90deg, var(--secondary), var(--accent), var(--secondary));
+            background-size: 200% auto; -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; background-clip: text;
+            animation: gradientShift 4s ease infinite, fadeInUp 0.6s ease;
+        }
+        .section-title h2::after {
+            content: ''; display: block; width: 50px; height: 3px; margin: 10px auto 0;
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+            border-radius: 4px; animation: scaleIn 0.8s ease;
+        }
+        .section-title p { color: var(--text-muted); font-size: 14px; margin-top: 8px; animation: fadeInUp 0.8s ease; }
 
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: var(--card-bg); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); transition: var(--transition); border: 2px solid var(--border); position: relative; }
-        .card:hover { transform: translateY(-6px); border-color: var(--secondary); box-shadow: var(--shadow-hover); }
-        
+        .categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
+        .category-card {
+            background: var(--card-bg); padding: 20px 12px; border-radius: var(--radius);
+            text-align: center; cursor: pointer; transition: var(--transition);
+            border: 2px solid var(--border); position: relative; overflow: hidden;
+            animation: fadeInUp 0.5s ease backwards;
+        }
+        .category-card:nth-child(1) { animation-delay: 0.1s; }
+        .category-card:nth-child(2) { animation-delay: 0.15s; }
+        .category-card:nth-child(3) { animation-delay: 0.2s; }
+        .category-card:nth-child(4) { animation-delay: 0.25s; }
+        .category-card:nth-child(5) { animation-delay: 0.3s; }
+        .category-card:nth-child(6) { animation-delay: 0.35s; }
+        .category-card:nth-child(7) { animation-delay: 0.4s; }
+        .category-card:nth-child(8) { animation-delay: 0.45s; }
+        .category-card:nth-child(9) { animation-delay: 0.5s; }
+        .category-card:nth-child(10) { animation-delay: 0.55s; }
+        .category-card::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s;
+        }
+        .category-card:hover::before { left: 100%; }
+        .category-card:hover { transform: translateY(-8px) scale(1.03); border-color: var(--secondary); box-shadow: var(--shadow-hover); }
+        .category-card:active { transform: scale(0.97); }
+        .category-icon {
+            width: 55px; height: 55px; border-radius: 50%; background: var(--bg);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 10px; font-size: 22px; color: var(--secondary);
+            transition: var(--transition); border: 1px solid var(--border);
+        }
+        .category-card:hover .category-icon {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            color: white; transform: rotate(360deg) scale(1.1); animation: bounce 0.6s ease;
+        }
+        .category-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+        .category-card span { color: var(--text-muted); font-size: 12px; }
+
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .card {
+            background: var(--card-bg); border-radius: var(--radius); padding: 20px;
+            box-shadow: var(--shadow); transition: var(--transition);
+            border: 1px solid var(--border); position: relative; overflow: hidden;
+            animation: fadeInUp 0.5s ease backwards;
+        }
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.8s;
+        }
+        .card:hover::before { left: 100%; }
+        .card:hover { transform: translateY(-8px) scale(1.02); border-color: var(--secondary); box-shadow: var(--shadow-hover); }
+        [data-theme="light"] .card:hover { box-shadow: 0 20px 50px rgba(59, 130, 246, 0.25); }
         .worker-header, .request-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-        .avatar-circle { width: 55px; height: 55px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--accent)); color: white; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; flex-shrink: 0; }
-        .info-block h4 { font-size: 17px; font-weight: 700; }
+        .avatar-circle {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: 900; flex-shrink: 0; transition: var(--transition); overflow: hidden;
+        }
+        .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+        .card:hover .avatar-circle { transform: rotate(-10deg) scale(1.1); }
+        .info-block h4 { font-size: 16px; font-weight: 700; }
         .info-block p { color: var(--text-muted); font-size: 13px; display: flex; align-items: center; gap: 5px; }
         .info-block p i { color: var(--secondary); }
-        
-        .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 15px; }
-        .tag { background: rgba(212, 160, 23, 0.08); color: var(--text); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid rgba(212, 160, 23, 0.1); }
-        .tag-budget { background: rgba(39, 174, 96, 0.1); color: var(--success); border-color: var(--success); }
-        
+        .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+        .tag {
+            background: rgba(128, 128, 128, 0.1); color: var(--text);
+            padding: 4px 10px; border-radius: 20px; font-size: 12px;
+            font-weight: 600; border: 1px solid var(--border); transition: var(--transition);
+        }
+        .tag:hover { transform: translateY(-2px); }
+        .tag-budget { background: rgba(16, 185, 129, 0.1); color: var(--success); border-color: var(--success); }
         .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-        .actions a, .actions button { flex: 1; min-width: 80px; text-align: center; padding: 10px; border-radius: 10px; font-weight: 700; transition: var(--transition); font-size: 13px; text-decoration: none; border: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .call-btn { background: var(--primary-light); color: white; border: 1px solid var(--border); }
-        .call-btn:hover { border-color: var(--secondary); color: var(--secondary); }
+        .actions a, .actions button {
+            flex: 1; min-width: 70px; text-align: center; padding: 10px;
+            border-radius: 10px; font-weight: 700; transition: var(--transition);
+            font-size: 13px; text-decoration: none; border: none; cursor: pointer;
+            font-family: inherit; display: flex; align-items: center; justify-content: center;
+            gap: 6px; position: relative; overflow: hidden;
+        }
+        .actions a:hover, .actions button:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .actions a:active, .actions button:active { transform: scale(0.96); }
+        .call-btn { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
         .whatsapp-btn { background: #25D366; color: white; }
-        .whatsapp-btn:hover { background: #128C7E; }
-        .chat-btn { background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); color: var(--primary); }
+        .chat-btn { background: linear-gradient(135deg, var(--secondary), var(--primary-light)); color: white; }
+        .favorite-btn { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+        .favorite-btn.active { background: var(--accent); color: white; }
 
-        .empty-state { text-align: center; padding: 50px; color: var(--text-muted); background: var(--card-bg); border-radius: var(--radius); border: 2px dashed var(--border); grid-column: 1 / -1; }
-        .empty-state i { font-size: 40px; margin-bottom: 12px; opacity: 0.3; color: var(--secondary); }
+        .empty-state {
+            text-align: center; padding: 40px; color: var(--text-muted);
+            background: var(--card-bg); border-radius: var(--radius);
+            border: 2px dashed var(--border); grid-column: 1 / -1;
+            animation: fadeInUp 0.6s ease;
+        }
+        .empty-state i {
+            font-size: 36px; margin-bottom: 12px; opacity: 0.3; color: var(--secondary);
+            animation: float 3s ease-in-out infinite;
+        }
 
-        .form-container { max-width: 800px; margin: 0 auto; background: var(--card-bg); padding: 30px; border-radius: var(--radius); box-shadow: var(--shadow); border: 2px solid var(--border); }
-        .form-group { margin-bottom: 18px; }
+        .form-container {
+            max-width: 800px; margin: 0 auto; background: var(--card-bg);
+            padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow);
+            border: 1px solid var(--border); animation: fadeInUp 0.6s ease;
+        }
+        .form-group { margin-bottom: 16px; }
         .form-group label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 14px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 14px; transition: var(--transition); outline: none; background: #0d0d0d; color: var(--text); }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--secondary); }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .success-message { background: rgba(39, 174, 96, 0.08); border: 2px solid var(--success); color: var(--success); padding: 16px; border-radius: 12px; text-align: center; margin-bottom: 20px; display: none; font-weight: 700; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 12px 14px; border: 2px solid var(--border);
+            border-radius: 10px; font-family: inherit; font-size: 14px;
+            transition: var(--transition); outline: none; background: var(--bg); color: var(--text);
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--secondary); transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.1);
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .success-message {
+            background: rgba(16, 185, 129, 0.1); border: 2px solid var(--success);
+            color: var(--success); padding: 14px; border-radius: 10px;
+            text-align: center; margin-bottom: 16px; display: none;
+            font-weight: 700; animation: scaleIn 0.4s ease;
+        }
         .success-message.show { display: block; }
 
-        .chat-integrated-wrapper { display: grid; grid-template-columns: 300px 1fr; gap: 0; background: var(--card-bg); border-radius: var(--radius); overflow: hidden; border: 2px solid var(--border); min-height: 550px; height: auto; }
-        .chat-list-side { background: #0d0d0d; border-left: 1px solid var(--border); padding: 15px; overflow-y: auto; }
-        .chat-list-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; cursor: pointer; transition: var(--transition); margin-bottom: 4px; border: 2px solid transparent; }
-        .chat-list-item:hover, .chat-list-item.active { background: rgba(212, 160, 23, 0.1); border-color: var(--secondary); }
-        .chat-list-item .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 900; flex-shrink: 0; }
+        .chat-integrated-wrapper {
+            display: grid; grid-template-columns: 280px 1fr; gap: 0;
+            background: var(--card-bg); border-radius: var(--radius);
+            overflow: hidden; border: 1px solid var(--border);
+            height: 70vh; min-height: 500px; animation: scaleIn 0.5s ease;
+        }
+        .chat-list-side { background: var(--bg); border-left: 1px solid var(--border); padding: 12px; overflow-y: auto; }
+        .chat-list-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px;
+            border-radius: 10px; cursor: pointer; transition: var(--transition);
+            margin-bottom: 4px; border: 1px solid transparent;
+            animation: slideInRight 0.4s ease backwards;
+        }
+        .chat-list-item:nth-child(1) { animation-delay: 0.05s; }
+        .chat-list-item:nth-child(2) { animation-delay: 0.1s; }
+        .chat-list-item:nth-child(3) { animation-delay: 0.15s; }
+        .chat-list-item:hover { transform: translateX(-5px); }
+        .chat-list-item:active { transform: scale(0.98); }
+        .chat-list-item:hover, .chat-list-item.active { background: rgba(128, 128, 128, 0.1); border-color: var(--secondary); }
+        .chat-list-item .avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-weight: 900; flex-shrink: 0; font-size: 16px;
+            transition: var(--transition); overflow: hidden;
+        }
+        .chat-list-item .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .chat-list-item:hover .avatar { transform: rotate(360deg); }
         .chat-list-item .chat-info { flex: 1; min-width: 0; }
-        .chat-list-item .chat-info .name { font-weight: 700; font-size: 14px; }
-        
-        .chat-window-integrated { display: flex; flex-direction: column; height: 100%; min-height: 500px; background: var(--card-bg); }
-        .chat-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); }
-        .chat-placeholder i { font-size: 50px; color: var(--secondary); opacity: 0.3; margin-bottom: 16px; }
+        .chat-list-item .chat-info .name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .chat-window-integrated { display: flex; flex-direction: column; height: 100%; background: var(--card-bg); }
+        .chat-placeholder {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; height: 100%; color: var(--text-muted);
+            animation: fadeInUp 0.6s ease;
+        }
+        .chat-placeholder i {
+            font-size: 40px; color: var(--secondary); opacity: 0.3;
+            margin-bottom: 12px; animation: float 3s ease-in-out infinite;
+        }
         .active-chat-window { display: none; flex-direction: column; height: 100%; }
-        .chat-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: rgba(212, 160, 23, 0.03); }
-        .chat-header-info { display: flex; align-items: center; gap: 12px; }
-        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: #0f0f0f; min-height: 300px; }
-        .message-bubble { max-width: 75%; padding: 10px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; animation: fadeIn 0.3s ease; }
-        .message-bubble.sent { align-self: flex-end; background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); color: var(--primary); border-bottom-right-radius: 4px; }
-        .message-bubble.received { align-self: flex-start; background: var(--card-bg); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+        .chat-header {
+            padding: 12px 16px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--bg); animation: fadeInDown 0.4s ease;
+        }
+        .chat-header-info { display: flex; align-items: center; gap: 10px; }
+        .chat-messages {
+            flex: 1; overflow-y: auto; padding: 16px;
+            display: flex; flex-direction: column; gap: 10px;
+            background: var(--bg); scroll-behavior: smooth;
+        }
+        .message-bubble {
+            max-width: 80%; padding: 10px 14px; border-radius: 16px;
+            font-size: 14px; line-height: 1.5; word-wrap: break-word;
+            animation: messagePop 0.4s ease;
+        }
+        .message-bubble.sent {
+            align-self: flex-end; background: linear-gradient(135deg, var(--secondary), var(--primary-light));
+            color: white; border-bottom-right-radius: 4px;
+        }
+        .message-bubble.received {
+            align-self: flex-start; background: var(--card-bg);
+            border: 1px solid var(--border); color: var(--text);
+            border-bottom-left-radius: 4px;
+        }
         .message-time { font-size: 10px; opacity: 0.7; margin-top: 4px; text-align: left; display: block; }
-        .chat-input-area { padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: var(--card-bg); min-height: 70px; flex-shrink: 0; align-items: center; }
-        .chat-input-area input[type="text"] { flex: 1; padding: 12px 16px; border-radius: 25px; border: 2px solid var(--border); background: #0d0d0d; color: var(--text); font-family: inherit; outline: none; }
-        .chat-input-area input[type="text"]:focus { border-color: var(--secondary); }
-        .chat-input-area button { width: 45px; height: 45px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .chat-input-area {
+            padding: 12px; border-top: 1px solid var(--border);
+            display: flex; gap: 8px; background: var(--card-bg);
+            align-items: center; flex-shrink: 0;
+        }
+        .chat-input-area input[type="text"] {
+            flex: 1; padding: 10px 14px; border-radius: 25px;
+            border: 2px solid var(--border); background: var(--bg);
+            color: var(--text); font-family: inherit; outline: none;
+            font-size: 14px; transition: var(--transition);
+        }
+        .chat-input-area input[type="text"]:focus { border-color: var(--secondary); transform: scale(1.02); }
+        .chat-input-area button {
+            width: 42px; height: 42px; border-radius: 50%; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 16px; transition: var(--transition);
+        }
+        .chat-input-area button:hover { transform: scale(1.1) rotate(10deg); }
+        .chat-input-area button:active { transform: scale(0.9); }
 
-        .chat-float-btn { position: fixed; bottom: 30px; left: 30px; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); color: var(--primary); border: none; font-size: 24px; cursor: pointer; box-shadow: 0 4px 20px rgba(212, 160, 23, 0.4); transition: var(--transition); z-index: 999; display: flex; align-items: center; justify-content: center; }
-        .chat-float-btn:hover { transform: scale(1.1) rotate(-10deg); }
+        .chat-float-btn {
+            position: fixed; bottom: 24px; left: 24px; width: 56px; height: 56px;
+            border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--accent));
+            color: white; border: none; font-size: 22px; cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: var(--transition);
+            z-index: 999; display: flex; align-items: center; justify-content: center;
+            animation: pulse 2s infinite;
+        }
+        .chat-float-btn:hover { transform: scale(1.15) rotate(-10deg); animation: none; }
+        .chat-float-btn:active { transform: scale(0.9); }
 
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--card-bg); border: 2px solid var(--secondary); color: var(--text); padding: 12px 24px; border-radius: 12px; box-shadow: 0 8px 30px rgba(212, 160, 23, 0.3); z-index: 3000; display: none; font-weight: 700; animation: fadeIn 0.3s ease; }
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--card-bg); border: 2px solid var(--secondary);
+            color: var(--text); padding: 12px 24px; border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3); z-index: 3000;
+            display: none; font-weight: 700; text-align: center; max-width: 90%;
+            animation: fadeInDown 0.4s ease;
+        }
         .toast.show { display: block; }
 
-        footer { background: var(--primary); color: white; padding: 30px 0 15px; text-align: center; border-top: 3px solid var(--secondary); margin-top: 40px; }
-        .footer-logo { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 12px; font-weight: 900; font-size: 22px; font-family: 'Amiri', serif; }
-        .footer-logo i { background: var(--secondary); color: var(--primary); width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        footer {
+            background: var(--card-bg); color: var(--text);
+            padding: 24px 0 12px; text-align: center;
+            border-top: 2px solid var(--border); margin-top: 40px;
+            animation: fadeInUp 0.6s ease;
+        }
+        .footer-logo {
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            margin-bottom: 10px; font-weight: 900; font-size: 20px; font-family: 'Amiri', serif;
+        }
+        .footer-logo i {
+            background: var(--secondary); color: white;
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .profile-card {
+            background: var(--card-bg); border-radius: var(--radius);
+            padding: 30px; max-width: 600px; margin: 0 auto;
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+            animation: scaleIn 0.5s ease;
+        }
+        .profile-header {
+            text-align: center; margin-bottom: 30px;
+            padding-bottom: 20px; border-bottom: 2px solid var(--border);
+        }
+        .profile-avatar-large {
+            width: 100px; height: 100px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-size: 40px; font-weight: 900; margin: 0 auto 15px;
+            animation: bounce 2s ease infinite; overflow: hidden;
+        }
+        .profile-avatar-large img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-name { font-size: 28px; font-weight: 900; color: var(--text); margin-bottom: 8px; }
+        .profile-status {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 16px; border-radius: 20px; font-size: 13px;
+            font-weight: 700; background: rgba(16, 185, 129, 0.1);
+            color: var(--success); border: 1px solid var(--success);
+        }
+        .profile-details { display: grid; gap: 20px; }
+        .detail-item {
+            display: flex; align-items: flex-start; gap: 15px; padding: 16px;
+            background: var(--bg); border-radius: 12px; border: 1px solid var(--border);
+            transition: var(--transition); animation: slideInRight 0.5s ease backwards;
+        }
+        .detail-item:nth-child(1) { animation-delay: 0.1s; }
+        .detail-item:nth-child(2) { animation-delay: 0.2s; }
+        .detail-item:nth-child(3) { animation-delay: 0.3s; }
+        .detail-item:nth-child(4) { animation-delay: 0.4s; }
+        .detail-item:nth-child(5) { animation-delay: 0.5s; }
+        .detail-item:hover { transform: translateX(-5px); border-color: var(--secondary); box-shadow: var(--shadow-hover); }
+        .detail-icon {
+            width: 45px; height: 45px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--secondary), var(--primary-light));
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0; transition: var(--transition);
+        }
+        .detail-item:hover .detail-icon { transform: rotate(360deg) scale(1.1); }
+        .detail-content { flex: 1; }
+        .detail-label { font-size: 13px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
+        .detail-value { font-size: 16px; color: var(--text); font-weight: 700; }
+        .profile-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 30px; }
+        .profile-actions button, .profile-actions a {
+            padding: 14px; border-radius: 12px; border: none; font-weight: 700;
+            cursor: pointer; font-family: inherit; font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; transition: var(--transition); text-decoration: none; color: white;
+        }
+        .profile-actions button:hover, .profile-actions a:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .profile-actions button:active, .profile-actions a:active { transform: scale(0.96); }
+
+        .rating-stars { display: flex; gap: 4px; justify-content: center; margin: 10px 0; }
+        .rating-stars i { font-size: 24px; color: var(--border); cursor: pointer; transition: var(--transition); }
+        .rating-stars i:hover, .rating-stars i.active { color: var(--secondary); transform: scale(1.2); }
 
         @media (max-width: 768px) {
-            .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--primary); flex-direction: column; padding: 16px; gap: 8px; border-bottom: 2px solid var(--secondary); }
+            .nav-links {
+                display: none; position: absolute; top: 100%; left: 0; right: 0;
+                background: var(--card-bg); flex-direction: column;
+                padding: 16px; gap: 8px; border-bottom: 2px solid var(--secondary);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: fadeInDown 0.3s ease;
+            }
             .nav-links.active { display: flex; }
             .menu-toggle { display: block; }
-            .chat-integrated-wrapper { grid-template-columns: 1fr; height: auto; }
-            .chat-list-side { max-height: 200px; border-left: none; border-bottom: 1px solid var(--border); }
-            .chat-window-integrated { height: 400px; }
+            .chat-integrated-wrapper { grid-template-columns: 1fr; height: 85vh; }
+            .chat-list-side { max-height: 100%; border-left: none; border-bottom: 1px solid var(--border); display: none; }
+            .chat-list-side.mobile-show { display: block; }
+            .chat-window-integrated.mobile-hide { display: none; }
             .form-row { grid-template-columns: 1fr; }
-            .hero h1 { font-size: 28px; }
+            .hero h1 { font-size: 26px; }
+            .message-bubble { max-width: 85%; }
+            .profile-card { padding: 20px; margin: 0 12px; }
+            .profile-name { font-size: 22px; }
+            .profile-actions { grid-template-columns: 1fr; }
+            .auth-container { padding: 30px 20px; }
+            .auth-logo h1 { font-size: 26px; }
         }
     </style>
 </head>
 <body>
+
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-container">
+            <div class="auth-logo">
+                <div class="auth-logo-icon"><i class="fas fa-tools"></i></div>
+                <h1>حِرَفي</h1>
+                <p>سوق العمّال والمقاولات المفتوح</p>
+            </div>
+
+            <div class="auth-tabs">
+                <div class="auth-tab" onclick="switchAuthTab('google')" id="tab-google"><i class="fab fa-google"></i> Google</div>
+                <div class="auth-tab" onclick="switchAuthTab('email')" id="tab-email"><i class="fas fa-envelope"></i> بريد</div>
+                <div class="auth-tab active" onclick="switchAuthTab('phone')" id="tab-phone"><i class="fas fa-mobile-alt"></i> جوال</div>
+            </div>
+
+            <div id="authMessage"></div>
+
+            <form class="auth-form" id="phoneForm" onsubmit="sendOTP(event)">
+                <div class="input-group">
+                    <label>رقم الجوال</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" id="authPhone" placeholder="05xxxxxxxx" required pattern="05[0-9]{8}">
+                    </div>
+                </div>
+                <button type="submit" class="auth-btn" id="sendOtpBtn">
+                    <i class="fas fa-paper-plane"></i> إرسال رمز التحقق
+                </button>
+                <p style="text-align:center; margin-top:15px; font-size:12px; color:var(--text-muted);">
+                    رمز التجربة: <strong style="color:var(--secondary); font-size:14px;">123456</strong>
+                </p>
+            </form>
+
+            <form class="auth-form hidden" id="otpForm" onsubmit="verifyOTP(event)">
+                <div style="text-align:center; margin-bottom:15px;">
+                    <i class="fas fa-shield-alt" style="font-size:40px; color:var(--secondary); animation: bounce 2s infinite;"></i>
+                    <p style="margin-top:10px; color:var(--text-muted); font-size:14px;">أدخل رمز التحقق المرسل إلى جوالك</p>
+                </div>
+                <div class="otp-inputs">
+                    <input type="text" class="otp-input" maxlength="1" oninput="moveOtp(this, 1)" onkeydown="backOtp(event, this)">
+                    <input type="text" class="otp-input" maxlength="1" oninput="moveOtp(this, 2)" onkeydown="backOtp(event, this)">
+                    <input type="text" class="otp-input" maxlength="1" oninput="moveOtp(this, 3)" onkeydown="backOtp(event, this)">
+                    <input type="text" class="otp-input" maxlength="1" oninput="moveOtp(this, 4)" onkeydown="backOtp(event, this)">
+                    <input type="text" class="otp-input" maxlength="1" oninput="moveOtp(this, 5)" onkeydown="backOtp(event, this)">
+                    <input type="text" class="otp-input" maxlength="1" oninput="moveOtp(this, 6)" onkeydown="backOtp(event, this)">
+                </div>
+                <button type="submit" class="auth-btn">
+                    <i class="fas fa-check-circle"></i> تأكيد الرمز
+                </button>
+                <div class="otp-timer">
+                    إعادة الإرسال خلال: <strong id="otpTimer">60</strong> ثانية
+                </div>
+                <button type="button" class="resend-btn" id="resendBtn" onclick="resendOTP()" disabled>
+                    <i class="fas fa-redo"></i> إعادة إرسال الرمز
+                </button>
+            </form>
+
+            <form class="auth-form hidden" id="emailForm" onsubmit="emailLogin(event)">
+                <div class="input-group">
+                    <label>البريد الإلكتروني</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="authEmail" placeholder="example@email.com" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>كلمة المرور</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="authPassword" placeholder="••••••••" required minlength="6">
+                    </div>
+                </div>
+                <button type="submit" class="auth-btn">
+                    <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+                </button>
+                <p style="text-align:center; margin-top:15px; font-size:13px; color:var(--text-muted);">
+                    ليس لديك حساب؟ <a href="#" onclick="showRegister()" style="color:var(--secondary); font-weight:700;">إنشاء حساب جديد</a>
+                </p>
+            </form>
+
+            <form class="auth-form hidden" id="registerForm" onsubmit="emailRegister(event)">
+                <div class="input-group">
+                    <label>الاسم الكامل</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="regName" placeholder="اسمك الكامل" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>البريد الإلكتروني</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="regEmail" placeholder="example@email.com" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>رقم الجوال</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" id="regPhone" placeholder="05xxxxxxxx" required pattern="05[0-9]{8}">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>كلمة المرور</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="regPassword" placeholder="6 أحرف على الأقل" required minlength="6">
+                    </div>
+                </div>
+                <button type="submit" class="auth-btn">
+                    <i class="fas fa-user-plus"></i> إنشاء الحساب
+                </button>
+                <p style="text-align:center; margin-top:15px; font-size:13px; color:var(--text-muted);">
+                    لديك حساب؟ <a href="#" onclick="showLogin()" style="color:var(--secondary); font-weight:700;">تسجيل الدخول</a>
+                </p>
+            </form>
+
+            <div class="auth-form hidden" id="googleForm">
+                <div style="text-align:center; padding:20px 0;">
+                    <i class="fab fa-google" style="font-size:60px; color:#4285F4; animation: bounce 2s infinite;"></i>
+                    <p style="margin:15px 0; color:var(--text-muted);">تسجيل دخول سريع وآمن</p>
+                </div>
+                <button class="google-btn" onclick="googleLogin()">
+                    <i class="fab fa-google" style="color:#4285F4;"></i>
+                    المتابعة باستخدام Google
+                </button>
+            </div>
+
+            <button class="guest-btn" onclick="continueAsGuest()">
+                <i class="fas fa-user-secret"></i> المتابعة كضيف (بدون تسجيل)
+            </button>
+        </div>
+    </div>
 
     <nav class="navbar">
         <div class="nav-wrap">
@@ -150,10 +814,18 @@
             </div>
             <div class="nav-links" id="navLinks">
                 <a onclick="showView('view-home')">السوق الرئيسي</a>
-                <a onclick="showView('view-add-request')" class="btn" style="background: var(--accent); color: white;"><i class="fas fa-plus-circle"></i> أضف طلب خدمة</a>
+                <a onclick="showView('view-add-request')" class="btn" style="background: var(--accent); color: white;"><i class="fas fa-plus-circle"></i> أضف طلب</a>
                 <a onclick="showView('view-worker-board')"><i class="fas fa-briefcase"></i> لوحة الفرص</a>
                 <a onclick="showView('view-add-worker')"><i class="fas fa-user-plus"></i> سجل كحرفي</a>
                 <a onclick="showView('view-chat')"><i class="fas fa-comments"></i> الدردشة</a>
+                <a onclick="showView('view-favorites')"><i class="fas fa-heart"></i> المفضلة</a>
+                <div class="user-menu" onclick="toggleUserMenu()">
+                    <div class="user-avatar-small" id="userAvatarSmall">ض</div>
+                    <div class="user-name-small" id="userNameSmall">ضيف</div>
+                </div>
+                <button class="btn btn-outline" onclick="toggleTheme()" style="padding: 6px 12px; font-size: 13px;">
+                    <i class="fas fa-adjust"></i> المظهر
+                </button>
             </div>
             <button class="menu-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
         </div>
@@ -312,6 +984,32 @@
             </section>
         </div>
 
+        <div id="view-profile" class="app-view">
+            <section>
+                <div class="container">
+                    <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;">
+                        <i class="fas fa-arrow-right"></i> رجوع
+                    </button>
+                    <div class="profile-card" id="profileCard"></div>
+                </div>
+            </section>
+        </div>
+
+        <div id="view-favorites" class="app-view">
+            <section>
+                <div class="container">
+                    <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;">
+                        <i class="fas fa-arrow-right"></i> رجوع
+                    </button>
+                    <div class="section-title">
+                        <h2><i class="fas fa-heart" style="color:var(--accent)"></i> المفضلة</h2>
+                        <p>الحرفيين الذين أضفتهم إلى قائمتك المفضلة</p>
+                    </div>
+                    <div class="grid-container" id="favoritesGrid"></div>
+                </div>
+            </section>
+        </div>
+
         <div id="view-chat" class="app-view">
             <section>
                 <div class="container">
@@ -321,10 +1019,13 @@
                     </div>
                     <div class="chat-integrated-wrapper">
                         <div class="chat-list-side" id="chatListSide">
-                            <h3 style="font-size:16px; color:var(--text-muted); margin-bottom:16px;"><i class="fas fa-comment-dots" style="color:var(--secondary)"></i> محادثاتك</h3>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                                <h3 style="font-size:15px; color:var(--text-muted);"><i class="fas fa-comment-dots" style="color:var(--secondary)"></i> محادثاتك</h3>
+                                <button onclick="toggleMobileChatList()" class="btn btn-outline" style="padding:4px 8px; font-size:12px; display:none;" id="backToChatsBtn"><i class="fas fa-arrow-right"></i> رجوع</button>
+                            </div>
                             <div id="chatListItemsSide"></div>
                         </div>
-                        <div class="chat-window-integrated">
+                        <div class="chat-window-integrated" id="chatWindowIntegrated">
                             <div id="chatPlaceholder" class="chat-placeholder">
                                 <i class="fas fa-comment"></i>
                                 <p>اختر محادثة من القائمة أو ابدأ محادثة جديدة</p>
@@ -338,7 +1039,7 @@
                                             <div class="status" style="font-size:12px; color:var(--success);">متصل الآن</div>
                                         </div>
                                     </div>
-                                    <button onclick="deleteCurrentChat()" style="background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-family:inherit; font-size:12px; display:flex; align-items:center; gap:5px;">
+                                    <button onclick="deleteCurrentChatLocally()" style="background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-family:inherit; font-size:12px; display:flex; align-items:center; gap:5px;">
                                         <i class="fas fa-trash"></i> حذف
                                     </button>
                                 </div>
@@ -373,10 +1074,10 @@
         </div>
     </footer>
 
-    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, serverTimestamp, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, serverTimestamp, getDocs, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithPhoneNumber, RecaptchaVerifier, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyApS10K5tWSNLfy51bt_GZzNBNfOzQFbLc",
@@ -390,20 +1091,305 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
         window.db = db;
-        window.firebaseFuncs = { collection, addDoc, onSnapshot, query, where, orderBy, doc, serverTimestamp, getDocs, deleteDoc };
-        
-        let myUserId = localStorage.getItem('hirafi_user_id');
-        if (!myUserId) {
-            myUserId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('hirafi_user_id', myUserId);
-        }
-        window.myUserId = myUserId;
-        console.log('✅ Firebase متصل بنجاح! معرف المستخدم:', myUserId);
+        window.auth = auth;
+        window.firebaseFuncs = { collection, addDoc, onSnapshot, query, where, orderBy, doc, serverTimestamp, getDocs, deleteDoc, setDoc };
+        window.firebaseAuth = { signInAnonymously, signInWithPhoneNumber, RecaptchaVerifier, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile, onAuthStateChanged, signOut };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.currentUser = user;
+                localStorage.setItem('hirafi_user', JSON.stringify({
+                    uid: user.uid,
+                    email: user.email,
+                    phone: user.phoneNumber,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL,
+                    isGuest: user.isAnonymous
+                }));
+                updateUIForUser(user);
+                document.getElementById('authOverlay').style.display = 'none';
+            } else {
+                window.currentUser = null;
+                localStorage.removeItem('hirafi_user');
+            }
+        });
+
+        console.log('✅ Firebase متصل بنجاح!');
     </script>
 
     <script>
+        let currentOtpCode = '123456';
+        let otpTimerInterval = null;
+
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.add('hidden'));
+            
+            if (tab === 'phone') {
+                document.getElementById('tab-phone').classList.add('active');
+                document.getElementById('phoneForm').classList.remove('hidden');
+            } else if (tab === 'email') {
+                document.getElementById('tab-email').classList.add('active');
+                document.getElementById('emailForm').classList.remove('hidden');
+            } else if (tab === 'google') {
+                document.getElementById('tab-google').classList.add('active');
+                document.getElementById('googleForm').classList.remove('hidden');
+            }
+            
+            document.getElementById('authMessage').innerHTML = '';
+        }
+
+        function showAuthMessage(msg, type) {
+            document.getElementById('authMessage').innerHTML = `<div class="auth-message ${type}">${msg}</div>`;
+            setTimeout(() => { document.getElementById('authMessage').innerHTML = ''; }, 4000);
+        }
+
+        async function sendOTP(event) {
+            event.preventDefault();
+            const phone = document.getElementById('authPhone').value.trim();
+            if (!phone.startsWith('05') || phone.length !== 10) {
+                showAuthMessage('❌ رقم الجوال غير صحيح (يجب أن يبدأ بـ 05)', 'error');
+                return;
+            }
+
+            try {
+                document.getElementById('sendOtpBtn').disabled = true;
+                document.getElementById('sendOtpBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+                currentOtpCode = '123456';
+                
+                document.getElementById('phoneForm').classList.add('hidden');
+                document.getElementById('otpForm').classList.remove('hidden');
+                
+                showAuthMessage('✅ تم إرسال رمز التحقق (للتجربة: 123456)', 'success');
+                startOtpTimer();
+                
+                setTimeout(() => { document.querySelectorAll('.otp-input')[0].focus(); }, 300);
+                
+            } catch (error) {
+                showAuthMessage('❌ فشل إرسال الرمز: ' + error.message, 'error');
+            } finally {
+                document.getElementById('sendOtpBtn').disabled = false;
+                document.getElementById('sendOtpBtn').innerHTML = '<i class="fas fa-paper-plane"></i> إرسال رمز التحقق';
+            }
+        }
+
+        function startOtpTimer() {
+            let seconds = 60;
+            const timerEl = document.getElementById('otpTimer');
+            const resendBtn = document.getElementById('resendBtn');
+            resendBtn.disabled = true;
+            
+            if (otpTimerInterval) clearInterval(otpTimerInterval);
+            
+            otpTimerInterval = setInterval(() => {
+                seconds--;
+                timerEl.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(otpTimerInterval);
+                    resendBtn.disabled = false;
+                }
+            }, 1000);
+        }
+
+        function resendOTP() {
+            currentOtpCode = '123456';
+            showAuthMessage('✅ تم إعادة إرسال الرمز (للتجربة: 123456)', 'success');
+            startOtpTimer();
+        }
+
+        function moveOtp(input, index) {
+            input.value = input.value.replace(/[^0-9]/g, '');
+            if (input.value && index < 6) {
+                document.querySelectorAll('.otp-input')[index].focus();
+            }
+        }
+
+        function backOtp(event, input) {
+            if (event.key === 'Backspace' && !input.value) {
+                const inputs = document.querySelectorAll('.otp-input');
+                const index = Array.from(inputs).indexOf(input);
+                if (index > 0) inputs[index - 1].focus();
+            }
+        }
+
+        async function verifyOTP(event) {
+            event.preventDefault();
+            const inputs = document.querySelectorAll('.otp-input');
+            const code = Array.from(inputs).map(i => i.value).join('');
+            
+            if (code.length !== 6) {
+                showAuthMessage('⚠️ أدخل الرمز كاملاً (6 أرقام)', 'error');
+                return;
+            }
+
+            if (code === currentOtpCode) {
+                showAuthMessage('✅ تم التحقق بنجاح! جاري الدخول...', 'success');
+                
+                try {
+                    const result = await window.firebaseAuth.signInAnonymously(window.auth);
+                    await window.firebaseAuth.updateProfile(result.user, {
+                        displayName: 'مستخدم ' + document.getElementById('authPhone').value.slice(-4),
+                        photoURL: null
+                    });
+                    
+                    await window.firebaseFuncs.setDoc(window.firebaseFuncs.doc(window.db, 'users', result.user.uid), {
+                        phone: document.getElementById('authPhone').value,
+                        createdAt: window.firebaseFuncs.serverTimestamp()
+                    });
+                    
+                    setTimeout(() => {
+                        document.getElementById('authOverlay').style.display = 'none';
+                    }, 1000);
+                } catch (error) {
+                    showAuthMessage('❌ فشل تسجيل الدخول: ' + error.message, 'error');
+                }
+            } else {
+                showAuthMessage('❌ الرمز غير صحيح (جرب: 123456)', 'error');
+                inputs.forEach(i => { i.value = ''; i.style.borderColor = '#ef4444'; });
+                setTimeout(() => { inputs.forEach(i => { i.style.borderColor = ''; }); inputs[0].focus(); }, 1000);
+            }
+        }
+
+        async function emailLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+
+            try {
+                await window.firebaseAuth.signInWithEmailAndPassword(window.auth, email, password);
+                showAuthMessage('✅ تم تسجيل الدخول بنجاح!', 'success');
+            } catch (error) {
+                showAuthMessage(' ' + getAuthError(error.code), 'error');
+            }
+        }
+
+        async function emailRegister(event) {
+            event.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                const result = await window.firebaseAuth.createUserWithEmailAndPassword(window.auth, email, password);
+                await window.firebaseAuth.updateProfile(result.user, { displayName: name });
+                
+                await window.firebaseFuncs.setDoc(window.firebaseFuncs.doc(window.db, 'users', result.user.uid), {
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    createdAt: window.firebaseFuncs.serverTimestamp()
+                });
+                
+                showAuthMessage('✅ تم إنشاء الحساب بنجاح!', 'success');
+            } catch (error) {
+                showAuthMessage('❌ ' + getAuthError(error.code), 'error');
+            }
+        }
+
+        async function googleLogin() {
+            try {
+                const provider = new window.firebaseAuth.GoogleAuthProvider();
+                await window.firebaseAuth.signInWithPopup(window.auth, provider);
+                showAuthMessage('✅ تم تسجيل الدخول بـ Google!', 'success');
+            } catch (error) {
+                showAuthMessage('❌ فشل تسجيل الدخول: ' + error.message, 'error');
+            }
+        }
+
+        function continueAsGuest() {
+            console.log('🔵 Guest button clicked');
+            
+            const overlay = document.getElementById('authOverlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+                console.log('✅ Overlay hidden');
+            }
+            
+            const guestData = {
+                uid: 'guest_' + Date.now(),
+                displayName: 'ضيف',
+                isGuest: true,
+                isAnonymous: true
+            };
+            
+            localStorage.setItem('hirafi_guest', 'true');
+            localStorage.setItem('hirafi_user', JSON.stringify(guestData));
+            
+            const userAvatar = document.getElementById('userAvatarSmall');
+            const userName = document.getElementById('userNameSmall');
+            
+            if (userAvatar) userAvatar.textContent = 'ض';
+            if (userName) userName.textContent = 'ضيف';
+            
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.textContent = '✅ تم الدخول كضيف';
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+            
+            console.log('✅ Guest mode activated');
+        }
+
+        function showRegister() {
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.add('hidden'));
+            document.getElementById('registerForm').classList.remove('hidden');
+        }
+
+        function showLogin() {
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.add('hidden'));
+            document.getElementById('emailForm').classList.remove('hidden');
+        }
+
+        function getAuthError(code) {
+            const errors = {
+                'auth/user-not-found': 'المستخدم غير موجود',
+                'auth/wrong-password': 'كلمة المرور غير صحيحة',
+                'auth/email-already-in-use': 'البريد مستخدم بالفعل',
+                'auth/weak-password': 'كلمة المرور ضعيفة (6 أحرف على الأقل)',
+                'auth/invalid-email': 'البريد الإلكتروني غير صحيح',
+                'auth/too-many-requests': 'محاولات كثيرة، حاول لاحقاً'
+            };
+            return errors[code] || 'حدث خطأ';
+        }
+
+        function updateUIForUser(user) {
+            const avatar = document.getElementById('userAvatarSmall');
+            const name = document.getElementById('userNameSmall');
+            
+            if (user.photoURL) {
+                avatar.innerHTML = `<img src="${user.photoURL}" alt="avatar">`;
+            } else {
+                avatar.textContent = (user.displayName || 'ض').charAt(0);
+            }
+            name.textContent = user.displayName || (user.isAnonymous ? 'ضيف' : 'مستخدم');
+        }
+
+        function toggleUserMenu() {
+            if (window.currentUser && !window.currentUser.isAnonymous) {
+                if (confirm('هل تريد تسجيل الخروج؟')) {
+                    window.firebaseAuth.signOut(window.auth);
+                    location.reload();
+                }
+            } else {
+                document.getElementById('authOverlay').style.display = 'flex';
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('hirafi_theme', newTheme);
+        }
+
+        const savedTheme = localStorage.getItem('hirafi_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
         const categories = [
             { name: 'كهرباء', icon: 'fa-bolt' }, { name: 'سباكة', icon: 'fa-wrench' },
             { name: 'بناء', icon: 'fa-hard-hat' }, { name: 'لياسة', icon: 'fa-paint-roller' },
@@ -443,12 +1429,26 @@
             document.getElementById(viewId).classList.add('active');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             document.getElementById('navLinks').classList.remove('active');
+            
+            if (window.innerWidth <= 768) {
+                document.getElementById('chatListSide').classList.remove('mobile-show');
+                document.getElementById('chatWindowIntegrated').classList.remove('mobile-hide');
+                document.getElementById('backToChatsBtn').style.display = 'none';
+            }
+
             if (viewId === 'view-home') renderCategories();
             if (viewId === 'view-worker-board') renderRequestsBoard();
             if (viewId === 'view-chat') renderChatList();
+            if (viewId === 'view-favorites') renderFavorites();
         }
 
         function toggleMenu() { document.getElementById('navLinks').classList.toggle('active'); }
+        function toggleMobileChatList() {
+            document.getElementById('chatListSide').classList.add('mobile-show');
+            document.getElementById('chatWindowIntegrated').classList.add('mobile-hide');
+            document.getElementById('backToChatsBtn').style.display = 'none';
+        }
+
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg; toast.classList.add('show');
@@ -471,13 +1471,16 @@
             document.getElementById('category-view-title').innerHTML = `تخصص: <span style="color:var(--secondary-light)">${categoryName}</span>`;
             const grid = document.getElementById('category-workers-grid');
             const myWorkers = JSON.parse(localStorage.getItem('hirafi_my_workers') || '[]');
+            const favorites = JSON.parse(localStorage.getItem('hirafi_favorites') || '[]');
 
             if (filteredWorkers.length === 0) {
                 grid.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i><p>لا يوجد حرفيون في هذا التخصص حالياً.</p></div>`;
             } else {
                 grid.innerHTML = filteredWorkers.map(worker => {
                     const isOwner = myWorkers.includes(worker.id);
+                    const isFavorite = favorites.includes(worker.id);
                     const deleteBtn = isOwner ? `<button onclick="deleteWorker('${worker.id}')" style="width:100%; margin-top:10px; background:var(--accent); color:white; border:none; padding:8px; border-radius:8px; cursor:pointer; font-family:inherit; font-weight:700;"><i class="fas fa-trash"></i> حذف ملفي</button>` : '';
+                    const favBtn = `<button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${worker.id}', this)"><i class="fas fa-heart"></i> ${isFavorite ? 'مفضل' : 'أضف للمفضلة'}</button>`;
                     return `
                     <div class="card">
                         <div class="worker-header">
@@ -489,18 +1492,66 @@
                         </div>
                         <div class="tags">
                             <span class="tag"><i class="fas fa-briefcase"></i> ${worker.specialty}</span>
-                            <span class="tag" style="background:rgba(39,174,96,0.1); color:var(--success); border-color:var(--success);"><i class="fas fa-check-circle"></i> متاح</span>
+                            <span class="tag" style="background:rgba(16,185,129,0.1); color:var(--success); border-color:var(--success);"><i class="fas fa-check-circle"></i> متاح</span>
                         </div>
                         <div class="actions">
-                            <a href="tel:${worker.phone}" class="call-btn"><i class="fas fa-phone"></i> اتصال</a>
-                            <a href="https://wa.me/${worker.phone}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</a>
+                            <button class="call-btn" onclick='showProfileDetails(${JSON.stringify(worker)}, "worker")'><i class="fas fa-user"></i> التفاصيل</button>
+                            <a href="tel:${worker.phone}" class="whatsapp-btn"><i class="fas fa-phone"></i> اتصال</a>
                             <button class="chat-btn" onclick="startChatWith('${worker.id}', '${worker.name}')"><i class="fas fa-comment"></i> دردشة</button>
                         </div>
+                        <div style="margin-top:10px;">${favBtn}</div>
                         ${deleteBtn}
                     </div>`;
                 }).join('');
             }
             showView('view-category');
+        }
+
+        function toggleFavorite(workerId, btn) {
+            let favorites = JSON.parse(localStorage.getItem('hirafi_favorites') || '[]');
+            if (favorites.includes(workerId)) {
+                favorites = favorites.filter(id => id !== workerId);
+                btn.classList.remove('active');
+                btn.innerHTML = '<i class="fas fa-heart"></i> أضف للمفضلة';
+                showToast('تم الإزالة من المفضلة');
+            } else {
+                favorites.push(workerId);
+                btn.classList.add('active');
+                btn.innerHTML = '<i class="fas fa-heart"></i> مفضل';
+                showToast('تمت الإضافة للمفضلة ❤️');
+            }
+            localStorage.setItem('hirafi_favorites', JSON.stringify(favorites));
+        }
+
+        function renderFavorites() {
+            const grid = document.getElementById('favoritesGrid');
+            const favorites = JSON.parse(localStorage.getItem('hirafi_favorites') || '[]');
+            const favoriteWorkers = workers.filter(w => favorites.includes(w.id));
+            
+            if (favoriteWorkers.length === 0) {
+                grid.innerHTML = `<div class="empty-state"><i class="fas fa-heart-broken"></i><p>لا توجد حرفيين في المفضلة حالياً.</p></div>`;
+                return;
+            }
+            
+            grid.innerHTML = favoriteWorkers.map(worker => `
+                <div class="card">
+                    <div class="worker-header">
+                        <div class="avatar-circle">${worker.name.charAt(0)}</div>
+                        <div class="info-block">
+                            <h4>${worker.name}</h4>
+                            <p><i class="fas fa-map-pin"></i> ${worker.address}</p>
+                        </div>
+                    </div>
+                    <div class="tags">
+                        <span class="tag"><i class="fas fa-briefcase"></i> ${worker.specialty}</span>
+                    </div>
+                    <div class="actions">
+                        <button class="call-btn" onclick='showProfileDetails(${JSON.stringify(worker)}, "worker")'><i class="fas fa-user"></i> التفاصيل</button>
+                        <a href="tel:${worker.phone}" class="whatsapp-btn"><i class="fas fa-phone"></i> اتصال</a>
+                        <button class="chat-btn" onclick="startChatWith('${worker.id}', '${worker.name}')"><i class="fas fa-comment"></i> دردشة</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function searchCategory() {
@@ -575,16 +1626,16 @@
                             <p><i class="fas fa-map-marker-alt"></i> ${req.location}</p>
                         </div>
                     </div>
-                    <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 12px; border-right: 3px solid var(--secondary);">
+                    <div style="background: rgba(128,128,128,0.05); padding: 12px; border-radius: 8px; margin-bottom: 12px; border-right: 3px solid var(--secondary);">
                         <p style="font-size: 14px; line-height: 1.6;">${req.desc}</p>
                     </div>
                     <div class="tags">
                         <span class="tag tag-budget"><i class="fas fa-coins"></i> الميزانية: ${req.budget}</span>
-                        <span class="tag" style="background:rgba(39,174,96,0.1); color:var(--success); border-color:var(--success);">مفتوح</span>
+                        <span class="tag" style="background:rgba(16,185,129,0.1); color:var(--success); border-color:var(--success);">مفتوح</span>
                     </div>
                     <div class="actions">
-                        <a href="tel:${req.clientPhone}" class="call-btn"><i class="fas fa-phone"></i> اتصال</a>
-                        <a href="https://wa.me/${req.clientPhone}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</a>
+                        <button class="call-btn" onclick='showProfileDetails(${JSON.stringify({...req, name:req.clientName, phone:req.clientPhone})}, "client")'><i class="fas fa-user"></i> التفاصيل</button>
+                        <a href="tel:${req.clientPhone}" class="whatsapp-btn"><i class="fas fa-phone"></i> اتصال</a>
                         <button class="chat-btn" onclick="startChatWith('req_${req.id}', '${req.clientName}')"><i class="fas fa-comment"></i> دردشة</button>
                     </div>
                     ${deleteBtn}
@@ -651,13 +1702,87 @@
             setTimeout(() => { el.className = 'success-message'; }, 4000);
         }
 
+        function showProfileDetails(personData, type) {
+            const card = document.getElementById('profileCard');
+            const avatar = personData.name.charAt(0);
+            const statusBadge = type === 'worker' ? 
+                `<span class="profile-status"><i class="fas fa-check-circle"></i> متاح للعمل</span>` :
+                `<span class="profile-status" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:#3b82f6"><i class="fas fa-user-circle"></i> عميل</span>`;
+            
+            card.innerHTML = `
+                <div class="profile-header">
+                    <div class="profile-avatar-large">${avatar}</div>
+                    <h1 class="profile-name">${personData.name}</h1>
+                    ${statusBadge}
+                </div>
+                <div class="profile-details">
+                    ${type === 'worker' ? `
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-briefcase"></i></div>
+                        <div class="detail-content">
+                            <div class="detail-label">التخصص</div>
+                            <div class="detail-value">${personData.specialty || 'غير محدد'}</div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <div class="detail-content">
+                            <div class="detail-label">العنوان / الموقع</div>
+                            <div class="detail-value">${personData.address || personData.location || 'غير محدد'}</div>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-phone"></i></div>
+                        <div class="detail-content">
+                            <div class="detail-label">رقم الجوال</div>
+                            <div class="detail-value" dir="ltr" style="text-align:right">${personData.phone || 'غير محدد'}</div>
+                        </div>
+                    </div>
+                    ${personData.desc ? `
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-info-circle"></i></div>
+                        <div class="detail-content">
+                            <div class="detail-label">تفاصيل إضافية</div>
+                            <div class="detail-value" style="font-size:14px;line-height:1.8">${personData.desc}</div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${personData.budget ? `
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-coins"></i></div>
+                        <div class="detail-content">
+                            <div class="detail-label">الميزانية</div>
+                            <div class="detail-value">${personData.budget}</div>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                <div class="profile-actions">
+                    <a href="tel:${personData.phone}" class="btn" style="background:var(--success);color:white;text-decoration:none;">
+                        <i class="fas fa-phone"></i> اتصال
+                    </a>
+                    <a href="https://wa.me/${personData.phone}" target="_blank" class="btn" style="background:#25D366;color:white;text-decoration:none;">
+                        <i class="fab fa-whatsapp"></i> واتساب
+                    </a>
+                    <button class="btn" onclick="startChatWith('${personData.id || 'req_' + Date.now()}', '${personData.name}'); showView('view-chat');" style="background:linear-gradient(135deg,var(--secondary),var(--primary-light));color:white;">
+                        <i class="fas fa-comment"></i> دردشة
+                    </button>
+                </div>
+            `;
+            showView('view-profile');
+        }
+
         function renderChatList() {
             const container = document.getElementById('chatListItemsSide');
-            if (chats.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">لا توجد محادثات بعد.</div>`;
+            const hiddenChats = JSON.parse(localStorage.getItem('hirafi_hidden_chats') || '[]');
+            const visibleChats = chats.filter(c => !hiddenChats.includes(c.id));
+            
+            if (visibleChats.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">لا توجد محادثات.</div>`;
                 return;
             }
-            container.innerHTML = chats.map(chat => `
+            container.innerHTML = visibleChats.map(chat => `
                 <div class="chat-list-item ${chat.id === currentChatId ? 'active' : ''}" onclick="switchChat('${chat.id}', '${chat.targetName}')">
                     <div class="avatar">${chat.targetName.charAt(0)}</div>
                     <div class="chat-info"><div class="name">${chat.targetName}</div></div>
@@ -669,6 +1794,13 @@
             currentChatId = chatId;
             document.querySelectorAll('.chat-list-item').forEach(el => el.classList.remove('active'));
             if (event && event.currentTarget) event.currentTarget.classList.add('active');
+            
+            if (window.innerWidth <= 768) {
+                document.getElementById('chatListSide').classList.remove('mobile-show');
+                document.getElementById('chatWindowIntegrated').classList.remove('mobile-hide');
+                document.getElementById('backToChatsBtn').style.display = 'block';
+            }
+
             document.getElementById('chatPlaceholder').style.display = 'none';
             document.getElementById('activeChatWindow').style.display = 'flex';
             document.getElementById('chatHeaderName').textContent = targetName;
@@ -748,6 +1880,30 @@
             } catch (error) { showToast('❌ فشل بدء المحادثة'); }
         }
 
+        function deleteCurrentChatLocally() {
+            if (!currentChatId) return;
+            if (!confirm('هل تريد حذف هذه المحادثة من جهازك فقط؟')) return;
+            
+            let hiddenChats = JSON.parse(localStorage.getItem('hirafi_hidden_chats') || '[]');
+            if (!hiddenChats.includes(currentChatId)) {
+                hiddenChats.push(currentChatId);
+                localStorage.setItem('hirafi_hidden_chats', JSON.stringify(hiddenChats));
+            }
+            
+            currentChatId = null;
+            document.getElementById('chatPlaceholder').style.display = 'flex';
+            document.getElementById('activeChatWindow').style.display = 'none';
+            
+            if (window.innerWidth <= 768) {
+                document.getElementById('chatListSide').classList.add('mobile-show');
+                document.getElementById('chatWindowIntegrated').classList.add('mobile-hide');
+                document.getElementById('backToChatsBtn').style.display = 'none';
+            }
+            
+            renderChatList();
+            showToast('✅ تم إخفاء المحادثة من جهازك');
+        }
+
         async function sendImage(event) {
             const file = event.target.files[0];
             if (!file || !currentChatId) return;
@@ -776,28 +1932,6 @@
                 showToast('❌ حدث خطأ في رفع الصورة');
             }
             event.target.value = '';
-        }
-
-        async function deleteCurrentChat() {
-            if (!currentChatId) return;
-            if (!confirm('هل أنت متأكد من حذف هذه المحادثة نهائياً؟')) return;
-            try {
-                const { db, firebaseFuncs } = window;
-                const { deleteDoc, doc, collection, getDocs } = firebaseFuncs;
-                const messagesRef = collection(db, `chats/${currentChatId}/messages`);
-                const snapshot = await getDocs(messagesRef);
-                snapshot.forEach(async (msgDoc) => {
-                    await deleteDoc(doc(db, `chats/${currentChatId}/messages`, msgDoc.id));
-                });
-                await deleteDoc(doc(db, "chats", currentChatId));
-                currentChatId = null;
-                document.getElementById('chatPlaceholder').style.display = 'flex';
-                document.getElementById('activeChatWindow').style.display = 'none';
-                showToast('✅ تم حذف المحادثة بنجاح');
-            } catch (error) {
-                console.error(error);
-                showToast('❌ فشل حذف المحادثة');
-            }
         }
 
         window.onload = function() { initMarket(); };
