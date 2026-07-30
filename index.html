@@ -6,6 +6,11 @@
     <title>حِرَفي - سوق العمّال والمقاولات المفتوح</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@700&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
         :root {
             --bg: #0a0a0a; --card-bg: #1a1a1a; --text: #ffffff; --text-muted: #aaaaaa;
@@ -14,7 +19,7 @@
             --accent: #c0392b; --accent-light: #e74c3c; --success: #27ae60;
             --border: #333333; --shadow: 0 4px 20px rgba(212, 160, 23, 0.08);
             --shadow-hover: 0 12px 40px rgba(212, 160, 23, 0.2); --radius: 16px;
-            --transition: all 0.3s ease;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         [data-theme="light"] {
             --bg: #f0f4f8; --card-bg: #ffffff; --text: #1e293b; --text-muted: #64748b;
@@ -29,79 +34,96 @@
         body { font-family: 'Tajawal', 'Cairo', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; transition: background 0.5s ease, color 0.5s ease; overflow-x: hidden; }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 
+        /* --- Animations --- */
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 50% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); } }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(212, 160, 23, 0.4); } 50% { box-shadow: 0 0 0 15px rgba(212, 160, 23, 0); } }
         @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-10px) rotate(5deg); } }
+        @keyframes messagePop { 0% { opacity: 0; transform: scale(0.3) translateY(20px); } 50% { transform: scale(1.05); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
-        .app-view { display: none; animation: fadeInUp 0.5s ease; padding-top: 20px; }
+        .app-view { display: none; animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1); padding-top: 20px; }
         .app-view.active { display: block; }
-        .navbar { background: var(--card-bg); box-shadow: var(--shadow); position: sticky; top: 0; z-index: 1000; border-bottom: 2px solid var(--secondary); }
+        
+        .navbar { background: var(--card-bg); box-shadow: var(--shadow); position: sticky; top: 0; z-index: 1000; border-bottom: 2px solid var(--secondary); animation: fadeInDown 0.6s ease; backdrop-filter: blur(10px); }
         .nav-wrap { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; max-width: 1200px; margin: 0 auto; }
-        .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 22px; color: var(--text); font-family: 'Amiri', serif; cursor: pointer; }
+        .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 22px; color: var(--text); font-family: 'Amiri', serif; text-decoration: none; cursor: pointer; transition: var(--transition); }
+        .logo:hover { transform: scale(1.05); }
         .logo i { background: linear-gradient(135deg, var(--secondary), var(--accent)); color: white; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; animation: float 3s ease-in-out infinite; }
         .nav-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .nav-links a { font-weight: 600; color: var(--text); transition: var(--transition); padding: 8px 14px; border-radius: 8px; font-size: 14px; cursor: pointer; }
-        .nav-links a:hover { background: var(--secondary); color: white; }
-        .btn { background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); color: white; padding: 8px 18px; border-radius: 10px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
-        .btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); }
+        .nav-links a { font-weight: 600; color: var(--text); transition: var(--transition); padding: 8px 14px; border-radius: 8px; font-size: 14px; text-decoration: none; cursor: pointer; position: relative; overflow: hidden; }
+        .nav-links a:hover { background: var(--secondary); color: white; transform: translateY(-2px); }
+        
+        .btn { background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); color: white; padding: 8px 18px; border-radius: 10px; font-weight: 700; border: none; cursor: pointer; transition: var(--transition); font-family: inherit; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; justify-content: center; }
+        .btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px 25px rgba(212, 130, 23, 0.4); }
+        .btn:active { transform: scale(0.96); }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none !important; }
         .btn-success { background: linear-gradient(135deg, var(--success), #34d399); color: white; }
+        .btn-danger { background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: white; }
+        .btn-warning { background: linear-gradient(135deg, #f39c12, #f1c40f); color: white; }
         .btn-outline { background: transparent; border: 2px solid var(--secondary); color: var(--secondary); }
-        .menu-toggle { display: none; background: none; border: none; font-size: 22px; color: var(--text); cursor: pointer; }
+        .btn-outline:hover { background: var(--secondary); color: white; }
+        .menu-toggle { display: none; background: none; border: none; font-size: 22px; color: var(--text); cursor: pointer; padding: 8px; }
 
-        .hero { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; padding: 50px 0 60px; text-align: center; border-bottom: 3px solid var(--secondary); }
-        .hero h1 { font-size: 32px; font-weight: 900; margin-bottom: 12px; }
-        .hero p { font-size: 16px; opacity: 0.9; margin-bottom: 20px; }
-        .search-box { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 14px; padding: 6px; display: flex; gap: 6px; max-width: 500px; margin: 0 auto; }
-        .search-box input { flex: 1; border: none; padding: 12px 16px; font-size: 15px; outline: none; background: rgba(255, 255, 255, 0.95); color: #000; border-radius: 10px; }
+        .hero { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; padding: 50px 0 60px; position: relative; overflow: hidden; border-bottom: 3px solid var(--secondary); text-align: center; }
+        .hero::before { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); animation: float 6s ease-in-out infinite; }
+        .hero h1 { font-size: 32px; font-weight: 900; margin-bottom: 12px; animation: fadeInUp 0.8s ease; }
+        .hero p { font-size: 16px; opacity: 0.9; margin-bottom: 20px; animation: fadeInUp 1s ease; }
+        .search-box { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 14px; padding: 6px; display: flex; gap: 6px; max-width: 500px; margin: 0 auto; animation: fadeInUp 1.2s ease; transition: var(--transition); }
+        .search-box:hover { transform: scale(1.02); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .search-box input { flex: 1; border: none; padding: 12px 16px; font-size: 15px; font-family: inherit; outline: none; background: rgba(255, 255, 255, 0.95); color: #000; border-radius: 10px; }
 
         section { padding: 40px 0; }
         .section-title { text-align: center; margin-bottom: 30px; }
-        .section-title h2 { font-size: 26px; font-weight: 900; color: var(--text); }
-        .section-title p { color: var(--text-muted); font-size: 14px; margin-top: 8px; }
+        .section-title h2 { font-size: 26px; font-weight: 900; color: var(--text); position: relative; display: inline-block; animation: fadeInUp 0.6s ease; }
+        .section-title h2::after { content: ''; display: block; width: 50px; height: 3px; margin: 10px auto 0; background: linear-gradient(90deg, var(--secondary), var(--accent)); border-radius: 4px; animation: scaleIn 0.8s ease; }
+        .section-title p { color: var(--text-muted); font-size: 14px; margin-top: 8px; animation: fadeInUp 0.8s ease; }
 
         .categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
-        .category-card { background: var(--card-bg); padding: 20px 12px; border-radius: var(--radius); text-align: center; cursor: pointer; transition: var(--transition); border: 2px solid var(--border); }
+        .category-card { background: var(--card-bg); padding: 20px 12px; border-radius: var(--radius); text-align: center; cursor: pointer; transition: var(--transition); border: 2px solid var(--border); position: relative; overflow: hidden; animation: fadeInUp 0.5s ease backwards; }
+        .category-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transition: left 0.6s; }
+        .category-card:hover::before { left: 100%; }
         .category-card:hover { transform: translateY(-8px) scale(1.03); border-color: var(--secondary); box-shadow: var(--shadow-hover); }
-        .category-icon { width: 55px; height: 55px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 22px; color: var(--secondary); border: 1px solid var(--border); transition: var(--transition); }
+        .category-icon { width: 55px; height: 55px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 22px; color: var(--secondary); transition: var(--transition); border: 1px solid var(--border); }
         .category-card:hover .category-icon { background: linear-gradient(135deg, var(--secondary), var(--accent)); color: white; transform: rotate(360deg) scale(1.1); }
-        .category-card h3 { font-size: 15px; font-weight: 700; }
+        .category-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
         .category-card span { color: var(--text-muted); font-size: 12px; }
 
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-        .card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); transition: var(--transition); border: 1px solid var(--border); }
+        .card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); transition: var(--transition); border: 1px solid var(--border); position: relative; overflow: hidden; animation: fadeInUp 0.5s ease backwards; }
+        .card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: left 0.8s; }
+        .card:hover::before { left: 100%; }
         .card:hover { transform: translateY(-8px) scale(1.02); border-color: var(--secondary); box-shadow: var(--shadow-hover); }
         .worker-header, .request-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-        .avatar-circle { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--accent)); color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; }
+        .avatar-circle { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--accent)); color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; flex-shrink: 0; transition: var(--transition); }
+        .card:hover .avatar-circle { transform: rotate(-10deg) scale(1.1); }
         .info-block h4 { font-size: 16px; font-weight: 700; }
-        .info-block p { color: var(--text-muted); font-size: 13px; }
+        .info-block p { color: var(--text-muted); font-size: 13px; display: flex; align-items: center; gap: 5px; }
         .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
         .tag { background: rgba(128, 128, 128, 0.1); color: var(--text); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); }
         .tag-budget { background: rgba(16, 185, 129, 0.1); color: var(--success); border-color: var(--success); }
         .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-        .actions a, .actions button { flex: 1; min-width: 70px; text-align: center; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 13px; text-decoration: none; border: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .actions a, .actions button { flex: 1; min-width: 70px; text-align: center; padding: 10px; border-radius: 10px; font-weight: 700; transition: var(--transition); font-size: 13px; text-decoration: none; border: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .actions a:hover, .actions button:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .call-btn { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
         .whatsapp-btn { background: #25D366; color: white; }
-        .details-btn { background: linear-gradient(135deg, var(--secondary), var(--primary-light)); color: white; }
+        .chat-btn { background: linear-gradient(135deg, var(--secondary), var(--primary-light)); color: white; }
         .favorite-btn { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
         .favorite-btn.active { background: var(--accent); color: white; }
-        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); background: var(--card-bg); border-radius: var(--radius); border: 2px dashed var(--border); grid-column: 1 / -1; }
-        .empty-state i { font-size: 36px; margin-bottom: 12px; opacity: 0.3; color: var(--secondary); }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); background: var(--card-bg); border-radius: var(--radius); border: 2px dashed var(--border); grid-column: 1 / -1; animation: fadeInUp 0.6s ease; }
+        .empty-state i { font-size: 36px; margin-bottom: 12px; opacity: 0.3; color: var(--secondary); animation: float 3s ease-in-out infinite; }
 
-        .form-container { max-width: 800px; margin: 0 auto; background: var(--card-bg); padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .form-container { max-width: 800px; margin: 0 auto; background: var(--card-bg); padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); animation: fadeInUp 0.6s ease; }
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 14px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 14px; background: var(--bg); color: var(--text); }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--secondary); }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 14px; transition: var(--transition); outline: none; background: var(--bg); color: var(--text); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--secondary); transform: translateY(-2px); }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .success-message { background: rgba(16, 185, 129, 0.1); border: 2px solid var(--success); color: var(--success); padding: 14px; border-radius: 10px; text-align: center; margin-bottom: 16px; display: none; font-weight: 700; }
+        .success-message { background: rgba(16, 185, 129, 0.1); border: 2px solid var(--success); color: var(--success); padding: 14px; border-radius: 10px; text-align: center; margin-bottom: 16px; display: none; font-weight: 700; animation: scaleIn 0.4s ease; }
         .success-message.show { display: block; }
-
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--card-bg); border: 2px solid var(--secondary); color: var(--text); padding: 12px 24px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); z-index: 3000; display: none; font-weight: 700; text-align: center; }
-        .toast.show { display: block; animation: fadeInDown 0.4s ease; }
 
         .profile-card { background: var(--card-bg); border-radius: var(--radius); padding: 30px; max-width: 600px; margin: 0 auto; box-shadow: var(--shadow); border: 1px solid var(--border); animation: scaleIn 0.5s ease; }
         .profile-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid var(--border); }
@@ -110,21 +132,57 @@
         .profile-status { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success); }
         .profile-details { display: grid; gap: 20px; }
         .detail-item { display: flex; align-items: flex-start; gap: 15px; padding: 16px; background: var(--bg); border-radius: 12px; border: 1px solid var(--border); transition: var(--transition); }
-        .detail-item:hover { border-color: var(--secondary); }
+        .detail-item:hover { transform: translateX(-5px); border-color: var(--secondary); }
         .detail-icon { width: 45px; height: 45px; border-radius: 10px; background: linear-gradient(135deg, var(--secondary), var(--primary-light)); color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
         .detail-label { font-size: 13px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
         .detail-value { font-size: 16px; color: var(--text); font-weight: 700; }
         .profile-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 30px; }
-        .profile-actions button, .profile-actions a { padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: white; }
+        .profile-actions button, .profile-actions a { padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: white; transition: var(--transition); }
         .profile-actions button:hover, .profile-actions a:hover { transform: translateY(-3px) scale(1.05); }
 
-        footer { background: var(--card-bg); color: var(--text); padding: 24px 0 12px; text-align: center; border-top: 2px solid var(--border); margin-top: 40px; }
+        .activity-feed { background: var(--card-bg); border-radius: var(--radius); padding: 20px; border: 1px solid var(--border); margin-top: 30px; animation: fadeInUp 0.8s ease; }
+        .activity-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); transition: var(--transition); animation: slideInRight 0.5s ease backwards; }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-item:hover { background: rgba(128,128,128,0.05); border-radius: 8px; padding: 12px 8px; }
+        .activity-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .activity-text { font-size: 14px; flex: 1; }
+        .activity-text strong { color: var(--secondary); }
+        .activity-time { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
+        .chat-integrated-wrapper { display: grid; grid-template-columns: 280px 1fr; gap: 0; background: var(--card-bg); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); height: 70vh; min-height: 500px; animation: scaleIn 0.5s ease; }
+        .chat-list-side { background: var(--bg); border-left: 1px solid var(--border); padding: 12px; overflow-y: auto; }
+        .chat-list-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; cursor: pointer; transition: var(--transition); margin-bottom: 4px; border: 1px solid transparent; animation: slideInRight 0.4s ease backwards; }
+        .chat-list-item:hover, .chat-list-item.active { background: rgba(128, 128, 128, 0.1); border-color: var(--secondary); }
+        .chat-list-item .avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--accent)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px; }
+        .chat-list-item .chat-info .name { font-weight: 700; font-size: 14px; }
+        .chat-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); }
+        .chat-placeholder i { font-size: 40px; color: var(--secondary); opacity: 0.3; margin-bottom: 12px; }
+        .active-chat-window { display: none; flex-direction: column; height: 100%; }
+        .chat-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--bg); }
+        .chat-header-info { display: flex; align-items: center; gap: 10px; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
+        .message-bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; animation: messagePop 0.4s ease; }
+        .message-bubble.sent { align-self: flex-end; background: linear-gradient(135deg, var(--secondary), var(--primary-light)); color: white; border-bottom-right-radius: 4px; }
+        .message-bubble.received { align-self: flex-start; background: var(--card-bg); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+        .message-time { font-size: 10px; opacity: 0.7; margin-top: 4px; text-align: left; display: block; }
+        .chat-input-area { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; background: var(--card-bg); }
+        .chat-input-area input[type="text"] { flex: 1; padding: 10px 14px; border-radius: 25px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; outline: none; font-size: 14px; }
+        .chat-input-area button { width: 42px; height: 42px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; border: none; cursor: pointer; color: white; }
+
+        .chat-float-btn { position: fixed; bottom: 24px; left: 24px; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--accent)); color: white; border: none; font-size: 22px; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 999; display: flex; align-items: center; justify-content: center; animation: pulse 2s infinite; }
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--card-bg); border: 2px solid var(--secondary); color: var(--text); padding: 12px 24px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); z-index: 3000; display: none; font-weight: 700; text-align: center; animation: fadeInDown 0.4s ease; }
+        .toast.show { display: block; }
+
+        footer { background: var(--card-bg); color: var(--text); padding: 24px 0 12px; text-align: center; border-top: 2px solid var(--border); margin-top: 40px; animation: fadeInUp 0.6s ease; }
         .footer-logo { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px; font-weight: 900; font-size: 20px; font-family: 'Amiri', serif; }
 
+        .loading-spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; }
+
         @media (max-width: 768px) {
-            .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); flex-direction: column; padding: 16px; gap: 8px; border-bottom: 2px solid var(--secondary); }
+            .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); flex-direction: column; padding: 16px; gap: 8px; border-bottom: 2px solid var(--secondary); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
             .nav-links.active { display: flex; }
             .menu-toggle { display: block; }
+            .chat-integrated-wrapper { grid-template-columns: 1fr; height: 85vh; }
             .form-row { grid-template-columns: 1fr; }
             .profile-actions { grid-template-columns: 1fr; }
         }
@@ -143,6 +201,7 @@
                 <a onclick="showView('view-add-request')" class="btn" style="background: var(--accent); color: white;"><i class="fas fa-plus-circle"></i> أضف طلب</a>
                 <a onclick="showView('view-worker-board')"><i class="fas fa-briefcase"></i> لوحة الفرص</a>
                 <a onclick="showView('view-add-worker')"><i class="fas fa-user-plus"></i> سجل كحرفي</a>
+                <a onclick="showView('view-chat')"><i class="fas fa-comments"></i> الدردشة</a>
                 <a onclick="showView('view-favorites')"><i class="fas fa-heart"></i> المفضلة</a>
                 <button class="btn btn-outline" onclick="toggleTheme()"><i class="fas fa-adjust"></i> المظهر</button>
             </div>
@@ -157,9 +216,9 @@
             <section class="hero">
                 <div class="container">
                     <h1>ابحث عن أفضل <span>العمّال المحترفين</span></h1>
-                    <p>أو أضف طلبك الآن ودع الحرفيين يتواصلون معك مباشرة عبر واتساب</p>
+                    <p>أو أضف طلبك الآن ودع الحرفيين يتواصلون معك مباشرة</p>
                     <div class="search-box">
-                        <input type="text" id="heroSearch" placeholder="ابحث عن تخصص...">
+                        <input type="text" id="heroSearch" placeholder="ابحث عن تخصص... (مثال: كهرباء، سباكة)" onkeypress="if(event.key==='Enter')searchCategory()">
                         <button class="btn" onclick="searchCategory()"><i class="fas fa-search"></i> بحث</button>
                     </div>
                 </div>
@@ -168,16 +227,24 @@
                 <div class="container">
                     <div class="section-title">
                         <h2>تصفح حسب التخصص</h2>
-                        <p>اختر المجال لعرض قائمة الحرفيين المتاحين</p>
+                        <p>اختر المجال لعرض قائمة الحرفيين المتاحين للتواصل الفوري</p>
                     </div>
                     <div class="categories-grid" id="categoriesGrid"></div>
+                    
+                    <div class="section-title" style="margin-top: 50px;">
+                        <h2><i class="fas fa-clock" style="color: var(--secondary);"></i> آخر المنضمين والنشاط</h2>
+                        <p>أحدث الحرفيين والطلبات المضافة للمنصة (تحديث مباشر)</p>
+                    </div>
+                    <div class="activity-feed" id="activityFeed">
+                        <div style="text-align:center; padding:20px; color:var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> جاري تحميل النشاط...</div>
+                    </div>
                 </div>
             </section>
         </div>
 
         <div id="view-category" class="app-view">
             <section><div class="container">
-                <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;"><i class="fas fa-arrow-right"></i> رجوع للسوق الرئيسي</button>
                 <div class="section-title"><h2 id="category-view-title">تخصص: </h2></div>
                 <div class="grid-container" id="category-workers-grid"></div>
             </div></section>
@@ -186,29 +253,30 @@
         <div id="view-add-request" class="app-view">
             <section><div class="container">
                 <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;"><i class="fas fa-arrow-right"></i> رجوع</button>
-                <div class="section-title"><h2>أضف طلب خدمة جديد</h2></div>
+                <div class="section-title"><h2><i class="fas fa-clipboard-list" style="color:var(--secondary)"></i> <span id="requestFormTitle">أضف طلب خدمة جديد</span></h2></div>
                 <div class="form-container">
-                    <form id="requestForm" onsubmit="addRequest(event)">
+                    <form id="requestForm" onsubmit="handleRequestSubmit(event)">
+                        <input type="hidden" id="editRequestId" value="">
                         <div class="form-row">
-                            <div class="form-group"><label>الاسم *</label><input type="text" id="reqName" required placeholder="اسمك للتواصل"></div>
-                            <div class="form-group"><label>رقم الجوال (واتساب) *</label><input type="tel" id="reqPhone" required placeholder="05xxxxxxxx"></div>
+                            <div class="form-group"><label>الاسم الكريم <span style="color:var(--accent)">*</span></label><input type="text" id="reqName" required placeholder="اسمك للتواصل"></div>
+                            <div class="form-group"><label>رقم الجوال <span style="color:var(--accent)">*</span></label><input type="tel" id="reqPhone" required placeholder="05xxxxxxxx"></div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group"><label>المدينة / الحي *</label><input type="text" id="reqLocation" required placeholder="مثال: الرياض - حي الملقا"></div>
-                            <div class="form-group"><label>التخصص *</label>
+                            <div class="form-group"><label>المدينة / الحي <span style="color:var(--accent)">*</span></label><input type="text" id="reqLocation" required placeholder="مثال: الرياض - حي الملقا"></div>
+                            <div class="form-group"><label>التخصص المطلوب <span style="color:var(--accent)">*</span></label>
                                 <select id="reqSpecialty" required>
-                                    <option value="">-- اختر --</option>
+                                    <option value="">-- اختر التخصص --</option>
                                     <option value="كهرباء">كهرباء</option><option value="سباكة">سباكة</option>
                                     <option value="بناء">بناء</option><option value="لياسة">لياسة</option>
-                                    <option value="بلاط">بلاط</option><option value="دهانات">دهانات</option>
+                                    <option value="بلاط">بلاط</option><option value="دهانات">دهانات / بوية</option>
                                     <option value="نجارة">نجارة</option><option value="حدادة">حدادة</option>
-                                    <option value="تبريد">تبريد</option><option value="أخرى">أخرى</option>
+                                    <option value="تبريد">تبريد وتكييف</option><option value="أخرى">أخرى</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="form-group"><label>وصف المشكلة *</label><textarea id="reqDesc" required style="min-height:100px;" placeholder="مثال: مكيف سبليت لا يبرد..."></textarea></div>
-                        <div class="form-group"><label>الميزانية (اختياري)</label><input type="text" id="reqBudget" placeholder="150 ريال أو اتركها فارغة"></div>
-                        <button type="submit" class="btn btn-success" style="width:100%; justify-content:center;"><i class="fas fa-paper-plane"></i> نشر الطلب</button>
+                        <div class="form-group"><label>وصف المشكلة أو الخدمة المطلوبة <span style="color:var(--accent)">*</span></label><textarea id="reqDesc" required placeholder="مثال: مكيف سبليت 18 ألف وحدة لا يبرد..." style="min-height:100px;"></textarea></div>
+                        <div class="form-group"><label>الميزانية المقترحة (اختياري)</label><input type="text" id="reqBudget" placeholder="مثال: 150 - 200 ريال"></div>
+                        <button type="submit" class="btn btn-success" style="width:100%; justify-content:center;" id="requestSubmitBtn"><i class="fas fa-paper-plane"></i> <span id="requestSubmitBtnText">نشر الطلب في السوق</span></button>
                         <div id="reqMessage" class="success-message"></div>
                     </form>
                 </div>
@@ -217,7 +285,7 @@
 
         <div id="view-worker-board" class="app-view">
             <section><div class="container">
-                <div class="section-title"><h2>لوحة فرص العمل</h2></div>
+                <div class="section-title"><h2><i class="fas fa-briefcase" style="color:var(--secondary)"></i> لوحة فرص العمل</h2></div>
                 <div class="grid-container" id="requestsGrid"></div>
             </div></section>
         </div>
@@ -225,25 +293,31 @@
         <div id="view-add-worker" class="app-view">
             <section><div class="container">
                 <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;"><i class="fas fa-arrow-right"></i> رجوع</button>
-                <div class="section-title"><h2>انضم كحرفي محترف</h2></div>
+                <div class="section-title"><h2><span id="workerFormTitle">انضم كحرفي محترف</span></h2></div>
                 <div class="form-container">
-                    <form id="workerAddForm" onsubmit="addWorker(event)">
+                    <form id="workerAddForm" onsubmit="handleWorkerSubmit(event)">
+                        <input type="hidden" id="editWorkerId" value="">
                         <div class="form-row">
-                            <div class="form-group"><label>الاسم *</label><input type="text" id="workerName" required placeholder="اسمك كما سيظهر للعملاء"></div>
-                            <div class="form-group"><label>رقم الجوال (واتساب) *</label><input type="tel" id="workerPhone" required placeholder="05xxxxxxxx"></div>
+                            <div class="form-group"><label>الاسم الكامل <span style="color:var(--accent)">*</span></label><input type="text" id="workerName" required placeholder="الاسم كما سيظهر للعملاء"></div>
+                            <div class="form-group"><label>رقم الجوال <span style="color:var(--accent)">*</span></label><input type="tel" id="workerPhone" required placeholder="05xxxxxxxx"></div>
                         </div>
-                        <div class="form-group"><label>العنوان *</label><input type="text" id="workerAddress" required placeholder="الرياض - حي النخيل"></div>
-                        <div class="form-group"><label>التخصص *</label>
+                        <div class="form-group"><label>العنوان / المدينة <span style="color:var(--accent)">*</span></label>
+                            <div style="display:flex; gap:10px;">
+                                <input type="text" id="workerAddress" required placeholder="مثال: الرياض - حي الملقا" style="flex:1;">
+                                <button type="button" class="btn" onclick="addAddressAuto()" style="white-space:nowrap;"><i class="fas fa-location-crosshairs"></i> موقعي</button>
+                            </div>
+                        </div>
+                        <div class="form-group"><label>التخصص <span style="color:var(--accent)">*</span></label>
                             <select id="workerSpecialty" required>
-                                <option value="">-- اختر --</option>
+                                <option value="">-- اختر التخصص --</option>
                                 <option value="كهرباء">كهرباء</option><option value="سباكة">سباكة</option>
                                 <option value="بناء">بناء</option><option value="لياسة">لياسة</option>
-                                <option value="بلاط">بلاط</option><option value="دهانات">دهانات</option>
+                                <option value="بلاط">بلاط</option><option value="دهانات">دهانات / بوية</option>
                                 <option value="نجارة">نجارة</option><option value="حدادة">حدادة</option>
-                                <option value="تبريد">تبريد</option><option value="أخرى">أخرى</option>
+                                <option value="تبريد">تبريد وتكييف</option><option value="أخرى">أخرى</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-success" style="width:100%; justify-content:center;"><i class="fas fa-user-plus"></i> نشر الملف</button>
+                        <button type="submit" class="btn btn-success" style="width:100%; justify-content:center;" id="workerSubmitBtn"><i class="fas fa-user-plus"></i> <span id="workerSubmitBtnText">نشر الملف في السوق</span></button>
                         <div id="workerAddMessage" class="success-message"></div>
                     </form>
                 </div>
@@ -260,31 +334,77 @@
         <div id="view-favorites" class="app-view">
             <section><div class="container">
                 <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;"><i class="fas fa-arrow-right"></i> رجوع</button>
-                <div class="section-title"><h2>المفضلة</h2></div>
+                <div class="section-title"><h2><i class="fas fa-heart" style="color:var(--accent)"></i> المفضلة</h2></div>
                 <div class="grid-container" id="favoritesGrid"></div>
+            </div></section>
+        </div>
+
+        <div id="view-chat" class="app-view">
+            <section><div class="container">
+                <div class="section-title"><h2><i class="fas fa-comments"></i> الدردشة المباشرة</h2></div>
+                <div class="chat-integrated-wrapper">
+                    <div class="chat-list-side" id="chatListSide">
+                        <h3 style="font-size:15px; color:var(--text-muted); margin-bottom:12px;"><i class="fas fa-comment-dots" style="color:var(--secondary)"></i> محادثاتك</h3>
+                        <div id="chatListItemsSide"></div>
+                    </div>
+                    <div class="chat-window-integrated" id="chatWindowIntegrated">
+                        <div id="chatPlaceholder" class="chat-placeholder"><i class="fas fa-comment"></i><p>اختر محادثة من القائمة</p></div>
+                        <div id="activeChatWindow" class="active-chat-window">
+                            <div class="chat-header">
+                                <div class="chat-header-info">
+                                    <div class="avatar" id="chatHeaderAvatar">م</div>
+                                    <div><div class="name" id="chatHeaderName" style="font-weight:700;">اسم المستخدم</div></div>
+                                </div>
+                                <button onclick="deleteCurrentChatLocally()" style="background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;"><i class="fas fa-trash"></i> حذف</button>
+                            </div>
+                            <div class="chat-messages" id="chatMessages"></div>
+                            <div class="chat-input-area">
+                                <input type="text" id="chatInput" placeholder="اكتب رسالتك هنا..." onkeypress="if(event.key==='Enter') sendMessage()">
+                                <button class="btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div></section>
         </div>
     </main>
 
+    <button class="chat-float-btn" onclick="showView('view-chat')" title="فتح الدردشة"><i class="fas fa-comment"></i></button>
+
     <footer>
-        <div class="container">
-            <div class="footer-logo">
-                <i class="fas fa-tools"></i>
-                <span>حِرَفي</span>
-            </div>
-            <p>© 2024 حِرَفي - سوق العمّال والمقاولات المفتوح</p>
-        </div>
+        <div class="container"><div class="footer-logo"><i class="fas fa-tools"></i><span>حِرَفي</span></div><p>© 2024 حِرَفي - سوق العمّال والمقاولات المفتوح</p></div>
     </footer>
 
     <script>
         // ============================================
-        // LOCAL STORAGE DATABASE
+        // 🔥 FIREBASE CONFIG - استبدل هذه القيم ببيانات مشروعك
         // ============================================
-        let workers = JSON.parse(localStorage.getItem('hirafi_workers_local')) || [
-            { id: 'demo1', name: 'أحمد محمد', phone: '0555123456', address: 'الرياض - حي النخيل', specialty: 'كهرباء' },
-            { id: 'demo2', name: 'خالد علي', phone: '0555234567', address: 'جدة - حي الروضة', specialty: 'سباكة' }
-        ];
-        let requests = JSON.parse(localStorage.getItem('hirafi_requests_local')) || [];
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ============================================
+        // 1. إعدادات النظام والمعرف الآمن
+        // ============================================
+        let myUserId = localStorage.getItem('hirafi_user_id');
+        if (!myUserId) {
+            myUserId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('hirafi_user_id', myUserId);
+        }
+
+        let workers = [];
+        let requests = [];
+        let chats = JSON.parse(localStorage.getItem('hirafi_chats_local')) || [];
+        let messages = JSON.parse(localStorage.getItem('hirafi_messages_local')) || {};
+        let currentChatId = null;
 
         const categories = [
             { name: 'كهرباء', icon: 'fa-bolt' }, { name: 'سباكة', icon: 'fa-wrench' },
@@ -295,26 +415,59 @@
         ];
 
         // ============================================
-        // GENERAL FUNCTIONS
+        // 2. Firebase Real-time Listeners (تحديث مباشر)
         // ============================================
+        db.ref('workers').on('value', (snapshot) => {
+            workers = [];
+            snapshot.forEach(child => { workers.push({ ...child.val(), id: child.key }); });
+            renderCategories();
+            renderActivityFeed();
+            if (document.getElementById('view-category').classList.contains('active')) {
+                const catName = document.getElementById('category-view-title').textContent.replace('تخصص: ', '').trim();
+                openCategoryPage(catName, false);
+            }
+        });
+
+        db.ref('requests').on('value', (snapshot) => {
+            requests = [];
+            snapshot.forEach(child => { requests.push({ ...child.val(), id: child.key }); });
+            renderActivityFeed();
+            if (document.getElementById('view-worker-board').classList.contains('active')) renderRequestsBoard();
+        });
+
+        // ============================================
+        // 3. دوال مساعدة وأمان
+        // ============================================
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         function toggleTheme() {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             document.documentElement.setAttribute('data-theme', currentTheme === 'light' ? 'dark' : 'light');
             localStorage.setItem('hirafi_theme', currentTheme === 'light' ? 'dark' : 'light');
         }
-        
-        // Load saved theme
-        const savedTheme = localStorage.getItem('hirafi_theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('hirafi_theme') || 'dark');
 
         function showView(viewId) {
-            document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
+            document.querySelectorAll('.app-view').forEach(v => {
+                v.style.opacity = '0';
+                setTimeout(() => {
+                    v.classList.remove('active');
+                    if (v.id === viewId) {
+                        v.classList.add('active');
+                        setTimeout(() => { v.style.opacity = '1'; }, 50);
+                    }
+                }, 200);
+            });
             window.scrollTo({ top: 0, behavior: 'smooth' });
             document.getElementById('navLinks').classList.remove('active');
-
-            if (viewId === 'view-home') renderCategories();
+            if (viewId === 'view-home') { renderCategories(); renderActivityFeed(); }
             if (viewId === 'view-worker-board') renderRequestsBoard();
+            if (viewId === 'view-chat') renderChatList();
             if (viewId === 'view-favorites') renderFavorites();
         }
 
@@ -334,66 +487,71 @@
             setTimeout(() => { el.className = 'success-message'; }, 4000);
         }
 
-        // Helper to convert phone to international format for WhatsApp
         function formatPhoneForWhatsApp(phone) {
             let cleanPhone = phone.replace(/\D/g, '');
-            if (cleanPhone.startsWith('0')) {
-                return '966' + cleanPhone.substring(1);
-            }
+            if (cleanPhone.startsWith('966')) return cleanPhone;
+            if (cleanPhone.startsWith('0')) return '966' + cleanPhone.substring(1);
             return cleanPhone;
         }
 
         // ============================================
-        // MARKET FUNCTIONS
+        // 4. وظائف السوق والتصنيفات
         // ============================================
         function renderCategories() {
             const grid = document.getElementById('categoriesGrid');
-            grid.innerHTML = categories.map(cat => {
+            grid.innerHTML = categories.map((cat, index) => {
                 const count = workers.filter(w => w.specialty === cat.name).length;
-                return `<div class="category-card" onclick="openCategoryPage('${cat.name}')">
+                return `<div class="category-card" style="animation-delay: ${index * 0.05}s" onclick="openCategoryPage('${cat.name}')">
                     <div class="category-icon"><i class="fas ${cat.icon}"></i></div>
-                    <h3>${cat.name}</h3><span>${count} حرفي متاح</span>
+                    <h3>${escapeHtml(cat.name)}</h3><span>${count} حرفي متاح</span>
                 </div>`;
             }).join('');
         }
 
-        function openCategoryPage(categoryName) {
+        function openCategoryPage(categoryName, showViewFlag = true) {
             const filteredWorkers = workers.filter(w => w.specialty === categoryName);
-            document.getElementById('category-view-title').innerText = `تخصص: ${categoryName}`;
+            document.getElementById('category-view-title').innerHTML = `تخصص: <span style="color:var(--secondary-light)">${escapeHtml(categoryName)}</span>`;
             const grid = document.getElementById('category-workers-grid');
             const favorites = JSON.parse(localStorage.getItem('hirafi_favorites') || '[]');
 
             if (filteredWorkers.length === 0) {
                 grid.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i><p>لا يوجد حرفيون في هذا التخصص حالياً.</p></div>`;
             } else {
-                grid.innerHTML = filteredWorkers.map(worker => {
+                grid.innerHTML = filteredWorkers.map((worker, index) => {
                     const isFavorite = favorites.includes(worker.id);
                     const whatsappLink = `https://wa.me/${formatPhoneForWhatsApp(worker.phone)}`;
+                    const isOwner = worker.ownerId === myUserId;
+                    const ownerActions = isOwner ? `
+                        <button class="btn-warning" onclick="editWorkerById('${worker.id}')" style="flex:1;"><i class="fas fa-edit"></i> تعديل</button>
+                        <button class="btn-danger" onclick="deleteWorkerById('${worker.id}')" style="flex:1;"><i class="fas fa-trash"></i> حذف</button>
+                    ` : '';
+
                     return `
-                    <div class="card">
+                    <div class="card" style="animation-delay: ${index * 0.1}s">
                         <div class="worker-header">
-                            <div class="avatar-circle">${worker.name.charAt(0)}</div>
+                            <div class="avatar-circle">${escapeHtml(worker.name).charAt(0)}</div>
                             <div class="info-block">
-                                <h4>${worker.name}</h4>
-                                <p><i class="fas fa-map-pin"></i> ${worker.address}</p>
+                                <h4>${escapeHtml(worker.name)}</h4>
+                                <p><i class="fas fa-map-pin"></i> ${escapeHtml(worker.address)}</p>
                             </div>
                         </div>
                         <div class="tags">
-                            <span class="tag"><i class="fas fa-briefcase"></i> ${worker.specialty}</span>
+                            <span class="tag"><i class="fas fa-briefcase"></i> ${escapeHtml(worker.specialty)}</span>
                             <span class="tag" style="background:rgba(16,185,129,0.1); color:var(--success); border-color:var(--success);"><i class="fas fa-check-circle"></i> متاح</span>
                         </div>
                         <div class="actions">
-                            <button class="details-btn" onclick='showProfileDetails(${JSON.stringify(worker)}, "worker")'><i class="fas fa-user"></i> التفاصيل</button>
+                            <button class="chat-btn" onclick="showProfileDetailsById('${worker.id}', 'worker')"><i class="fas fa-user"></i> التفاصيل</button>
                             <a href="tel:${worker.phone}" class="call-btn"><i class="fas fa-phone"></i> اتصال</a>
                             <a href="${whatsappLink}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</a>
                         </div>
-                        <div style="margin-top:10px;">
-                            <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${worker.id}', this)"><i class="fas fa-heart"></i> ${isFavorite ? 'مفضل' : 'أضف للمفضلة'}</button>
+                        <div style="margin-top:10px; display:flex; gap:8px;">
+                            <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${worker.id}', this)" style="flex:1;"><i class="fas fa-heart"></i> ${isFavorite ? 'مفضل' : 'أضف للمفضلة'}</button>
                         </div>
+                        ${isOwner ? `<div class="actions" style="margin-top:8px;">${ownerActions}</div>` : ''}
                     </div>`;
                 }).join('');
             }
-            showView('view-category');
+            if (showViewFlag) showView('view-category');
         }
 
         function toggleFavorite(workerId, btn) {
@@ -416,26 +574,21 @@
             const grid = document.getElementById('favoritesGrid');
             const favorites = JSON.parse(localStorage.getItem('hirafi_favorites') || '[]');
             const favoriteWorkers = workers.filter(w => favorites.includes(w.id));
-            
             if (favoriteWorkers.length === 0) {
                 grid.innerHTML = `<div class="empty-state"><i class="fas fa-heart-broken"></i><p>لا توجد حرفيين في المفضلة حالياً.</p></div>`;
                 return;
             }
-            
             grid.innerHTML = favoriteWorkers.map(worker => {
                 const whatsappLink = `https://wa.me/${formatPhoneForWhatsApp(worker.phone)}`;
                 return `
                 <div class="card">
                     <div class="worker-header">
-                        <div class="avatar-circle">${worker.name.charAt(0)}</div>
-                        <div class="info-block">
-                            <h4>${worker.name}</h4>
-                            <p><i class="fas fa-map-pin"></i> ${worker.address}</p>
-                        </div>
+                        <div class="avatar-circle">${escapeHtml(worker.name).charAt(0)}</div>
+                        <div class="info-block"><h4>${escapeHtml(worker.name)}</h4><p><i class="fas fa-map-pin"></i> ${escapeHtml(worker.address)}</p></div>
                     </div>
-                    <div class="tags"><span class="tag"><i class="fas fa-briefcase"></i> ${worker.specialty}</span></div>
+                    <div class="tags"><span class="tag"><i class="fas fa-briefcase"></i> ${escapeHtml(worker.specialty)}</span></div>
                     <div class="actions">
-                        <button class="details-btn" onclick='showProfileDetails(${JSON.stringify(worker)}, "worker")'><i class="fas fa-user"></i> التفاصيل</button>
+                        <button class="chat-btn" onclick="showProfileDetailsById('${worker.id}', 'worker')"><i class="fas fa-user"></i> التفاصيل</button>
                         <a href="tel:${worker.phone}" class="call-btn"><i class="fas fa-phone"></i> اتصال</a>
                         <a href="${whatsappLink}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</a>
                     </div>
@@ -452,173 +605,372 @@
         }
 
         // ============================================
-        // REQUEST FUNCTIONS
+        // 5. وظائف الطلبات (Firebase)
         // ============================================
-        function addRequest(event) {
+        function handleRequestSubmit(event) {
             event.preventDefault();
-            const newReq = {
-                id: 'req_' + Date.now(),
+            const editId = document.getElementById('editRequestId').value;
+            const btn = document.getElementById('requestSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
+
+            const reqData = {
                 clientName: document.getElementById('reqName').value,
                 clientPhone: document.getElementById('reqPhone').value,
                 location: document.getElementById('reqLocation').value,
                 specialty: document.getElementById('reqSpecialty').value,
                 desc: document.getElementById('reqDesc').value,
                 budget: document.getElementById('reqBudget').value || 'قابل للنقاش',
-                status: 'مفتوح'
+                status: 'مفتوح',
+                ownerId: myUserId,
+                timestamp: Date.now()
             };
-            requests.push(newReq);
-            localStorage.setItem('hirafi_requests_local', JSON.stringify(requests));
-            document.getElementById('requestForm').reset();
-            showMessage('reqMessage', '✅ تم نشر طلبك بنجاح!');
-            setTimeout(() => showView('view-worker-board'), 2000);
+
+            let promise = editId ? db.ref('requests/' + editId).update(reqData) : db.ref('requests').push(reqData);
+
+            promise.then(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check"></i> تم الحفظ';
+                showMessage('reqMessage', editId ? '✅ تم تحديث الطلب بنجاح!' : '✅ تم نشر طلبك بنجاح!');
+                resetRequestForm();
+                showToast(editId ? '✅ تم تحديث الطلب' : '✅ تم نشر طلبك!');
+                setTimeout(() => showView('view-worker-board'), 1500);
+            }).catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ! حاول مجدداً';
+                showToast('❌ حدث خطأ: ' + err.message);
+            });
         }
 
-        function deleteRequest(reqId) {
-            if (!confirm('حذف الطلب؟')) return;
-            requests = requests.filter(r => r.id !== reqId);
-            localStorage.setItem('hirafi_requests_local', JSON.stringify(requests));
-            renderRequestsBoard();
-            showToast('✅ تم الحذف');
+        function resetRequestForm() {
+            document.getElementById('requestForm').reset();
+            document.getElementById('editRequestId').value = '';
+            document.getElementById('requestFormTitle').textContent = 'أضف طلب خدمة جديد';
+            document.getElementById('requestSubmitBtnText').textContent = 'نشر الطلب في السوق';
+            document.getElementById('requestSubmitBtn').innerHTML = '<i class="fas fa-paper-plane"></i> <span id="requestSubmitBtnText">نشر الطلب في السوق</span>';
+        }
+
+        function editRequestById(reqId) {
+            const req = requests.find(r => r.id === reqId);
+            if (!req) return;
+            document.getElementById('editRequestId').value = req.id;
+            document.getElementById('reqName').value = req.clientName;
+            document.getElementById('reqPhone').value = req.clientPhone;
+            document.getElementById('reqLocation').value = req.location;
+            document.getElementById('reqSpecialty').value = req.specialty;
+            document.getElementById('reqDesc').value = req.desc;
+            document.getElementById('reqBudget').value = req.budget === 'قابل للنقاش' ? '' : req.budget;
+            document.getElementById('requestFormTitle').textContent = 'تعديل طلب الخدمة';
+            document.getElementById('requestSubmitBtnText').textContent = 'حفظ التعديلات';
+            document.getElementById('requestSubmitBtn').innerHTML = '<i class="fas fa-edit"></i> <span id="requestSubmitBtnText">حفظ التعديلات</span>';
+            showView('view-add-request');
+        }
+
+        function deleteRequestById(reqId) {
+            if (!confirm('هل أنت متأكد من حذف هذا الطلب نهائياً؟')) return;
+            db.ref('requests/' + reqId).remove().then(() => showToast('✅ تم حذف الطلب')).catch(err => showToast('❌ خطأ: ' + err.message));
         }
 
         function renderRequestsBoard() {
             const grid = document.getElementById('requestsGrid');
-            const openRequests = requests.filter(r => r.status === 'مفتوح');
+            const openRequests = requests.filter(r => r.status === 'مفتوح').sort((a,b) => b.timestamp - a.timestamp);
             if (openRequests.length === 0) {
-                grid.innerHTML = `<div class="empty-state"><i class="fas fa-clipboard-check"></i><p>لا توجد طلبات جديدة.</p></div>`;
+                grid.innerHTML = `<div class="empty-state"><i class="fas fa-clipboard-check"></i><p>لا توجد طلبات جديدة حالياً.</p></div>`;
                 return;
             }
-            grid.innerHTML = openRequests.map(req => {
+            grid.innerHTML = openRequests.map((req, index) => {
                 const whatsappLink = `https://wa.me/${formatPhoneForWhatsApp(req.clientPhone)}`;
+                const isOwner = req.ownerId === myUserId;
+                const ownerActions = isOwner ? `
+                    <div class="actions" style="margin-top:10px;">
+                        <button class="btn-warning" onclick="editRequestById('${req.id}')" style="flex:1;"><i class="fas fa-edit"></i> تعديل</button>
+                        <button class="btn-danger" onclick="deleteRequestById('${req.id}')" style="flex:1;"><i class="fas fa-trash"></i> حذف</button>
+                    </div>` : '';
+
                 return `
-                <div class="card">
+                <div class="card" style="animation-delay: ${index * 0.1}s">
                     <div class="request-header">
-                        <div class="avatar-circle" style="background: linear-gradient(135deg, var(--accent), var(--accent-light));">${req.clientName.charAt(0)}</div>
-                        <div class="info-block">
-                            <h4>طلب: ${req.specialty}</h4>
-                            <p><i class="fas fa-map-marker-alt"></i> ${req.location}</p>
-                        </div>
+                        <div class="avatar-circle" style="background: linear-gradient(135deg, var(--accent), var(--accent-light));">${escapeHtml(req.clientName).charAt(0)}</div>
+                        <div class="info-block"><h4>طلب: ${escapeHtml(req.specialty)}</h4><p><i class="fas fa-map-marker-alt"></i> ${escapeHtml(req.location)}</p></div>
                     </div>
                     <div style="background: rgba(128,128,128,0.05); padding: 12px; border-radius: 8px; margin-bottom: 12px; border-right: 3px solid var(--secondary);">
-                        <p style="font-size: 14px; line-height: 1.6;">${req.desc}</p>
+                        <p style="font-size: 14px;">${escapeHtml(req.desc)}</p>
                     </div>
                     <div class="tags">
-                        <span class="tag tag-budget"><i class="fas fa-coins"></i> الميزانية: ${req.budget}</span>
+                        <span class="tag tag-budget"><i class="fas fa-coins"></i> الميزانية: ${escapeHtml(req.budget)}</span>
                         <span class="tag" style="background:rgba(16,185,129,0.1); color:var(--success); border-color:var(--success);">مفتوح</span>
                     </div>
                     <div class="actions">
-                        <button class="details-btn" onclick='showProfileDetails(${JSON.stringify({...req, name:req.clientName, phone:req.clientPhone})}, "client")'><i class="fas fa-user"></i> التفاصيل</button>
+                        <button class="chat-btn" onclick="showProfileDetailsById('${req.id}', 'client')"><i class="fas fa-user"></i> التفاصيل</button>
                         <a href="tel:${req.clientPhone}" class="call-btn"><i class="fas fa-phone"></i> اتصال</a>
                         <a href="${whatsappLink}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</a>
                     </div>
-                    <button onclick="deleteRequest('${req.id}')" style="width:100%; margin-top:10px; background:var(--accent); color:white; border:none; padding:8px; border-radius:8px; cursor:pointer;"><i class="fas fa-trash"></i> حذف الطلب</button>
+                    ${ownerActions}
                 </div>`;
             }).join('');
         }
 
         // ============================================
-        // WORKER FUNCTIONS
+        // 6. وظائف الحرفيين (Firebase)
         // ============================================
-        function addWorker(event) {
+        function handleWorkerSubmit(event) {
             event.preventDefault();
-            const newWorker = {
-                id: 'worker_' + Date.now(),
+            const editId = document.getElementById('editWorkerId').value;
+            const btn = document.getElementById('workerSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
+
+            const workerData = {
                 name: document.getElementById('workerName').value,
                 phone: document.getElementById('workerPhone').value,
                 address: document.getElementById('workerAddress').value,
-                specialty: document.getElementById('workerSpecialty').value
+                specialty: document.getElementById('workerSpecialty').value,
+                ownerId: myUserId,
+                timestamp: Date.now()
             };
-            workers.push(newWorker);
-            localStorage.setItem('hirafi_workers_local', JSON.stringify(workers));
+
+            let promise = editId ? db.ref('workers/' + editId).update(workerData) : db.ref('workers').push(workerData);
+
+            promise.then(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check"></i> تم الحفظ';
+                showMessage('workerAddMessage', editId ? '✅ تم تحديث بياناتك بنجاح!' : '✅ تم نشر ملفك بنجاح!');
+                resetWorkerForm();
+                showToast(editId ? '✅ تم تحديث بياناتك' : '✅ تم نشر ملفك!');
+                setTimeout(() => showView('view-home'), 1500);
+            }).catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ! حاول مجدداً';
+                showToast('❌ حدث خطأ: ' + err.message);
+            });
+        }
+
+        function resetWorkerForm() {
             document.getElementById('workerAddForm').reset();
-            showMessage('workerAddMessage', '✅ تم نشر ملفك بنجاح!');
-            setTimeout(() => showView('view-home'), 2000);
+            document.getElementById('editWorkerId').value = '';
+            document.getElementById('workerFormTitle').textContent = 'انضم كحرفي محترف';
+            document.getElementById('workerSubmitBtnText').textContent = 'نشر الملف في السوق';
+            document.getElementById('workerSubmitBtn').innerHTML = '<i class="fas fa-user-plus"></i> <span id="workerSubmitBtnText">نشر الملف في السوق</span>';
+        }
+
+        function editWorkerById(workerId) {
+            const worker = workers.find(w => w.id === workerId);
+            if (!worker) return;
+            document.getElementById('editWorkerId').value = worker.id;
+            document.getElementById('workerName').value = worker.name;
+            document.getElementById('workerPhone').value = worker.phone;
+            document.getElementById('workerAddress').value = worker.address;
+            document.getElementById('workerSpecialty').value = worker.specialty;
+            document.getElementById('workerFormTitle').textContent = 'تعديل بيانات الحرفي';
+            document.getElementById('workerSubmitBtnText').textContent = 'حفظ التعديلات';
+            document.getElementById('workerSubmitBtn').innerHTML = '<i class="fas fa-edit"></i> <span id="workerSubmitBtnText">حفظ التعديلات</span>';
+            showView('view-add-worker');
+        }
+
+        function deleteWorkerById(workerId) {
+            if (!confirm('هل أنت متأكد من حذف ملفك نهائياً من المنصة؟')) return;
+            db.ref('workers/' + workerId).remove().then(() => showToast('✅ تم حذف الملف بنجاح')).catch(err => showToast('❌ خطأ: ' + err.message));
+        }
+
+        function addAddressAuto() {
+            const addressInput = document.getElementById('workerAddress');
+            addressInput.value = 'جاري تحديد الموقع...';
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    try {
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&accept-language=ar`, { headers: { 'User-Agent': 'HirafiPlatform/1.0' } });
+                        const data = await response.json();
+                        addressInput.value = (data.address.city || data.address.town || 'موقع محدد') + ' - ' + (data.address.suburb || data.address.neighborhood || '');
+                    } catch (e) { addressInput.value = 'تعذر تحديد الموقع.'; }
+                }, () => { addressInput.value = 'تعذر تحديد الموقع.'; });
+            } else { addressInput.value = 'غير مدعوم.'; }
         }
 
         // ============================================
-        // PROFILE DETAILS FUNCTIONS
+        // 7. عرض التفاصيل (Profile) بأمان
         // ============================================
-        function showProfileDetails(personData, type) {
+        function showProfileDetailsById(id, type) {
+            const personData = type === 'worker' ? workers.find(w => w.id === id) : requests.find(r => r.id === id);
+            if (!personData) return;
+
             const card = document.getElementById('profileCard');
-            const avatar = personData.name ? personData.name.charAt(0) : '?';
-            const statusBadge = type === 'worker' ? 
+            const name = type === 'worker' ? personData.name : personData.clientName;
+            const avatar = name ? escapeHtml(name).charAt(0) : '?';
+            const statusBadge = type === 'worker' ?
                 `<span class="profile-status"><i class="fas fa-check-circle"></i> متاح للعمل</span>` :
                 `<span class="profile-status" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:#3b82f6"><i class="fas fa-user-circle"></i> عميل</span>`;
-            
-            const phone = personData.phone || 'غير محدد';
+
+            const phone = type === 'worker' ? personData.phone : personData.clientPhone;
             const whatsappLink = `https://wa.me/${formatPhoneForWhatsApp(phone)}`;
-            
+            const isOwner = personData.ownerId === myUserId;
+
+            const ownerButtons = isOwner ? `
+                <button class="btn btn-warning" onclick="${type === 'worker' ? `editWorkerById('${id}')` : `editRequestById('${id}')`}" style="color:white;">
+                    <i class="fas fa-edit"></i> تعديل البيانات
+                </button>
+                <button class="btn btn-danger" onclick="${type === 'worker' ? `deleteWorkerById('${id}')` : `deleteRequestById('${id}')`}" style="color:white;">
+                    <i class="fas fa-trash"></i> حذف نهائي
+                </button>
+            ` : '';
+
             card.innerHTML = `
                 <div class="profile-header">
                     <div class="profile-avatar-large">${avatar}</div>
-                    <h1 class="profile-name">${personData.name || 'غير محدد'}</h1>
+                    <h1 class="profile-name">${escapeHtml(name)}</h1>
                     ${statusBadge}
                 </div>
                 <div class="profile-details">
                     ${type === 'worker' && personData.specialty ? `
                     <div class="detail-item">
                         <div class="detail-icon"><i class="fas fa-briefcase"></i></div>
-                        <div class="detail-content">
-                            <div class="detail-label">التخصص</div>
-                            <div class="detail-value">${personData.specialty}</div>
-                        </div>
+                        <div><div class="detail-label">التخصص</div><div class="detail-value">${escapeHtml(personData.specialty)}</div></div>
                     </div>` : ''}
                     <div class="detail-item">
                         <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
-                        <div class="detail-content">
-                            <div class="detail-label">العنوان / الموقع</div>
-                            <div class="detail-value">${personData.address || personData.location || 'غير محدد'}</div>
-                        </div>
+                        <div><div class="detail-label">العنوان / الموقع</div><div class="detail-value">${escapeHtml(personData.address || personData.location || 'غير محدد')}</div></div>
                     </div>
                     <div class="detail-item">
                         <div class="detail-icon"><i class="fas fa-phone"></i></div>
-                        <div class="detail-content">
-                            <div class="detail-label">رقم الجوال</div>
-                            <div class="detail-value" dir="ltr" style="text-align:right">${phone}</div>
-                        </div>
+                        <div><div class="detail-label">رقم الجوال</div><div class="detail-value" dir="ltr" style="text-align:right">${escapeHtml(phone)}</div></div>
                     </div>
                     ${personData.desc ? `
                     <div class="detail-item">
                         <div class="detail-icon"><i class="fas fa-info-circle"></i></div>
-                        <div class="detail-content">
-                            <div class="detail-label">تفاصيل إضافية</div>
-                            <div class="detail-value" style="font-size:14px;line-height:1.8">${personData.desc}</div>
-                        </div>
+                        <div><div class="detail-label">تفاصيل إضافية</div><div class="detail-value" style="font-size:14px;line-height:1.8">${escapeHtml(personData.desc)}</div></div>
                     </div>` : ''}
                     ${personData.budget ? `
                     <div class="detail-item">
                         <div class="detail-icon"><i class="fas fa-coins"></i></div>
-                        <div class="detail-content">
-                            <div class="detail-label">الميزانية</div>
-                            <div class="detail-value">${personData.budget}</div>
-                        </div>
+                        <div><div class="detail-label">الميزانية</div><div class="detail-value">${escapeHtml(personData.budget)}</div></div>
                     </div>` : ''}
                 </div>
                 <div class="profile-actions">
-                    <a href="tel:${phone}" class="btn" style="background:var(--success);color:white;">
-                        <i class="fas fa-phone"></i> اتصال
-                    </a>
-                    <a href="${whatsappLink}" target="_blank" class="btn" style="background:#25D366;color:white;">
-                        <i class="fab fa-whatsapp"></i> واتساب
-                    </a>
-                    <button class="btn" onclick="copyNumber('${phone}')" style="background:linear-gradient(135deg,var(--secondary),var(--primary-light));color:white;">
-                        <i class="fas fa-copy"></i> نسخ الرقم
-                    </button>
+                    <a href="tel:${phone}" class="btn" style="background:var(--success);color:white;"><i class="fas fa-phone"></i> اتصال</a>
+                    <a href="${whatsappLink}" target="_blank" class="btn" style="background:#25D366;color:white;"><i class="fab fa-whatsapp"></i> واتساب</a>
+                    ${ownerButtons}
                 </div>
             `;
             showView('view-profile');
         }
 
-        function copyNumber(phone) {
-            navigator.clipboard.writeText(phone).then(() => {
-                showToast('✅ تم نسخ الرقم بنجاح');
-            }).catch(err => {
-                showToast('❌ تعذر نسخ الرقم');
+        // ============================================
+        // 8. قائمة النشاط الأخيرة (Activity Feed)
+        // ============================================
+        function renderActivityFeed() {
+            const feedContainer = document.getElementById('activityFeed');
+            const allActivity = [
+                ...workers.map(w => ({...w, type: 'worker'})),
+                ...requests.map(r => ({...r, type: 'request'}))
+            ].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 6);
+
+            if (allActivity.length === 0) {
+                feedContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px;"><i class="fas fa-inbox" style="font-size:24px; opacity:0.3; display:block; margin-bottom:10px;"></i>لا يوجد نشاط حديث على المنصة.</div>`;
+                return;
+            }
+
+            feedContainer.innerHTML = allActivity.map((item, index) => {
+                const isWorker = item.type === 'worker';
+                const icon = isWorker ? 'fa-user-plus' : 'fa-clipboard-list';
+                const color = isWorker ? 'var(--success)' : 'var(--accent)';
+                const text = isWorker
+                    ? `انضم حرفي جديد: <strong>${escapeHtml(item.name)}</strong> (تخصص: ${escapeHtml(item.specialty)})`
+                    : `طلب خدمة جديد: <strong>${escapeHtml(item.specialty)}</strong> في ${escapeHtml(item.location)}`;
+                
+                const seconds = Math.floor((Date.now() - (item.timestamp || 0)) / 1000);
+                const timeAgo = seconds < 60 ? 'الآن' : seconds < 3600 ? `منذ ${Math.floor(seconds/60)} دقيقة` : `منذ ${Math.floor(seconds/3600)} ساعة`;
+
+                return `
+                <div class="activity-item" style="animation-delay: ${index * 0.1}s; cursor:pointer;" onclick="showProfileDetailsById('${item.id}', '${item.type}')">
+                    <div class="activity-icon" style="color: ${color}; background: ${color}15;"><i class="fas ${icon}"></i></div>
+                    <div class="activity-text">${text}</div>
+                    <div class="activity-time">${timeAgo}</div>
+                </div>`;
+            }).join('');
+        }
+
+        // ============================================
+        // 9. وظائف الدردشة (محلية للتجربة)
+        // ============================================
+        function renderChatList() {
+            const container = document.getElementById('chatListItemsSide');
+            if (chats.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">لا توجد محادثات.</div>`;
+                return;
+            }
+            container.innerHTML = chats.map(chat => `
+                <div class="chat-list-item ${chat.id === currentChatId ? 'active' : ''}" onclick="switchChat('${chat.id}', '${escapeHtml(chat.targetName)}')">
+                    <div class="avatar">${escapeHtml(chat.targetName).charAt(0)}</div>
+                    <div class="chat-info"><div class="name">${escapeHtml(chat.targetName) || 'مستخدم'}</div></div>
+                </div>`).join('');
+        }
+
+        function switchChat(chatId, targetName) {
+            currentChatId = chatId;
+            document.querySelectorAll('.chat-list-item').forEach(el => el.classList.remove('active'));
+            if (event && event.currentTarget) event.currentTarget.classList.add('active');
+            document.getElementById('chatPlaceholder').style.display = 'none';
+            document.getElementById('activeChatWindow').style.display = 'flex';
+            document.getElementById('chatHeaderName').textContent = targetName || 'مستخدم';
+            document.getElementById('chatHeaderAvatar').textContent = targetName ? targetName.charAt(0) : '?';
+            renderMessages(chatId);
+        }
+
+        function renderMessages(chatId) {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = '';
+            const chatMessages = messages[chatId] || [];
+            if (chatMessages.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:20px; font-size:13px;">ابدأ المحادثة الآن</div>';
+                return;
+            }
+            chatMessages.forEach(msg => {
+                const div = document.createElement('div');
+                const isMine = msg.senderId === myUserId;
+                div.className = `message-bubble ${isMine ? 'sent' : 'received'}`;
+                div.innerHTML = `${escapeHtml(msg.text)}<span class="message-time">${msg.time || ''}</span>`;
+                container.appendChild(div);
             });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || !currentChatId) return;
+            if (!messages[currentChatId]) messages[currentChatId] = [];
+            messages[currentChatId].push({ text, senderId: myUserId, time: new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) });
+            localStorage.setItem('hirafi_messages_local', JSON.stringify(messages));
+            input.value = '';
+            renderMessages(currentChatId);
+        }
+
+        function startChatWith(targetId, targetName) {
+            let existingChat = chats.find(c => c.targetId === targetId);
+            if (!existingChat) {
+                existingChat = { id: 'chat_' + Date.now(), targetId, targetName };
+                chats.push(existingChat);
+                localStorage.setItem('hirafi_chats_local', JSON.stringify(chats));
+            }
+            showView('view-chat');
+            setTimeout(() => switchChat(existingChat.id, existingChat.targetName), 100);
+        }
+
+        function deleteCurrentChatLocally() {
+            if (!currentChatId || !confirm('حذف هذه المحادثة؟')) return;
+            chats = chats.filter(c => c.id !== currentChatId);
+            delete messages[currentChatId];
+            localStorage.setItem('hirafi_chats_local', JSON.stringify(chats));
+            localStorage.setItem('hirafi_messages_local', JSON.stringify(messages));
+            currentChatId = null;
+            document.getElementById('chatPlaceholder').style.display = 'flex';
+            document.getElementById('activeChatWindow').style.display = 'none';
+            renderChatList();
+            showToast('✅ تم حذف المحادثة');
         }
 
         // Initialize on load
         renderCategories();
+        renderActivityFeed();
     </script>
 </body>
 </html>
