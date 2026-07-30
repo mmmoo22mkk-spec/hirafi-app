@@ -2,15 +2,12 @@
 <html lang="ar" dir="rtl" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>حِرَفي - سوق العمّال والمقاولات المفتوح</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@700&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
     <style>
         :root {
             --bg: #0a0a0a; --card-bg: #1a1a1a; --text: #ffffff; --text-muted: #aaaaaa;
@@ -34,7 +31,6 @@
         body { font-family: 'Tajawal', 'Cairo', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; transition: background 0.5s ease, color 0.5s ease; overflow-x: hidden; }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 
-        /* --- Animations --- */
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
@@ -190,6 +186,8 @@
 </head>
 <body>
 
+    <div class="toast" id="toast"></div>
+
     <nav class="navbar">
         <div class="nav-wrap">
             <div class="logo" onclick="showView('view-home')">
@@ -208,8 +206,6 @@
             <button class="menu-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
         </div>
     </nav>
-
-    <div class="toast" id="toast"></div>
 
     <main id="app">
         <div id="view-home" class="app-view active">
@@ -230,7 +226,6 @@
                         <p>اختر المجال لعرض قائمة الحرفيين المتاحين للتواصل الفوري</p>
                     </div>
                     <div class="categories-grid" id="categoriesGrid"></div>
-                    
                     <div class="section-title" style="margin-top: 50px;">
                         <h2><i class="fas fa-clock" style="color: var(--secondary);"></i> آخر المنضمين والنشاط</h2>
                         <p>أحدث الحرفيين والطلبات المضافة للمنصة (تحديث مباشر)</p>
@@ -276,7 +271,7 @@
                         </div>
                         <div class="form-group"><label>وصف المشكلة أو الخدمة المطلوبة <span style="color:var(--accent)">*</span></label><textarea id="reqDesc" required placeholder="مثال: مكيف سبليت 18 ألف وحدة لا يبرد..." style="min-height:100px;"></textarea></div>
                         <div class="form-group"><label>الميزانية المقترحة (اختياري)</label><input type="text" id="reqBudget" placeholder="مثال: 150 - 200 ريال"></div>
-                        <button type="submit" class="btn btn-success" style="width:100%; justify-content:center;" id="requestSubmitBtn"><i class="fas fa-paper-plane"></i> <span id="requestSubmitBtnText">نشر الطلب في السوق</span></button>
+                        <button type="submit" class="btn btn-success" style="width:100%; justify-content:center;" id="requestSubmitBtn"><i class="fas fa-paper-plane"></i> نشر الطلب في السوق</button>
                         <div id="reqMessage" class="success-message"></div>
                     </form>
                 </div>
@@ -317,7 +312,7 @@
                                 <option value="تبريد">تبريد وتكييف</option><option value="أخرى">أخرى</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-success" style="width:100%; justify-content:center;" id="workerSubmitBtn"><i class="fas fa-user-plus"></i> <span id="workerSubmitBtnText">نشر الملف في السوق</span></button>
+                        <button type="submit" class="btn btn-success" style="width:100%; justify-content:center;" id="workerSubmitBtn"><i class="fas fa-user-plus"></i> نشر الملف في السوق</button>
                         <div id="workerAddMessage" class="success-message"></div>
                     </form>
                 </div>
@@ -372,27 +367,27 @@
     <button class="chat-float-btn" onclick="showView('view-chat')" title="فتح الدردشة"><i class="fas fa-comment"></i></button>
 
     <footer>
-        <div class="container"><div class="footer-logo"><i class="fas fa-tools"></i><span>حِرَفي</span></div><p>© 2024 حِرَفي - سوق العمّال والمقاولات المفتوح</p></div>
+        <div class="container"><div class="footer-logo"><i class="fas fa-tools"></i><span>حِرَفي</span></div><p>© 2026 حِرَفي - سوق العمّال والمقاولات المفتوح</p></div>
     </footer>
 
     <script>
         // ============================================
-        // 🔥 FIREBASE CONFIG - استبدل هذه القيم ببيانات مشروعك
+        // 🔥 FIREBASE CONFIG - بيانات مشروع ASMAR
         // ============================================
-      const firebaseConfig = {
-    apiKey: "AIzaSyApS10K5tWSNLfy51bt_GZrNBNfOzQFbLc",
-    authDomain: "asmar-c5a76.firebaseapp.com",
-    databaseURL: "https://asmar-c5a76-default-rtdb.firebaseio.com",
-    projectId: "asmar-c5a76",
-    storageBucket: "asmar-c5a76.firebasestorage.app",
-    messagingSenderId: "122714975670",
-    appId: "1:122714975670:web:5c2bdbd2aa17a7d712517"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyApS10K5tWSNLfy51bt_GZrNBNfOzQFbLc",
+            authDomain: "asmar-c5a76.firebaseapp.com",
+            databaseURL: "https://asmar-c5a76-default-rtdb.firebaseio.com",
+            projectId: "asmar-c5a76",
+            storageBucket: "asmar-c5a76.firebasestorage.app",
+            messagingSenderId: "122714975670",
+            appId: "1:122714975670:web:5c2bdbd2aa17a7d712517"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         // ============================================
-        // 1. إعدادات النظام والمعرف الآمن
+        // 1. إعدادات النظام
         // ============================================
         let myUserId = localStorage.getItem('hirafi_user_id');
         if (!myUserId) {
@@ -415,7 +410,7 @@
         ];
 
         // ============================================
-        // 2. Firebase Real-time Listeners (تحديث مباشر)
+        // 2. Firebase Real-time Listeners
         // ============================================
         db.ref('workers').on('value', (snapshot) => {
             workers = [];
@@ -436,7 +431,7 @@
         });
 
         // ============================================
-        // 3. دوال مساعدة وأمان
+        // 3. دوال مساعدة آمنة
         // ============================================
         function escapeHtml(text) {
             if (!text) return '';
@@ -464,27 +459,35 @@
                 }, 200);
             });
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            document.getElementById('navLinks').classList.remove('active');
+            const navLinks = document.getElementById('navLinks');
+            if (navLinks) navLinks.classList.remove('active');
             if (viewId === 'view-home') { renderCategories(); renderActivityFeed(); }
             if (viewId === 'view-worker-board') renderRequestsBoard();
             if (viewId === 'view-chat') renderChatList();
             if (viewId === 'view-favorites') renderFavorites();
         }
 
-        function toggleMenu() { document.getElementById('navLinks').classList.toggle('active'); }
+        function toggleMenu() { 
+            const navLinks = document.getElementById('navLinks');
+            if (navLinks) navLinks.classList.toggle('active'); 
+        }
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+            if (toast) {
+                toast.textContent = msg;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            }
         }
 
         function showMessage(elementId, text) {
             const el = document.getElementById(elementId);
-            el.textContent = text;
-            el.className = 'success-message show';
-            setTimeout(() => { el.className = 'success-message'; }, 4000);
+            if (el) {
+                el.textContent = text;
+                el.className = 'success-message show';
+                setTimeout(() => { el.className = 'success-message'; }, 4000);
+            }
         }
 
         function formatPhoneForWhatsApp(phone) {
@@ -495,10 +498,11 @@
         }
 
         // ============================================
-        // 4. وظائف السوق والتصنيفات
+        // 4. وظائف السوق
         // ============================================
         function renderCategories() {
             const grid = document.getElementById('categoriesGrid');
+            if (!grid) return;
             grid.innerHTML = categories.map((cat, index) => {
                 const count = workers.filter(w => w.specialty === cat.name).length;
                 return `<div class="category-card" style="animation-delay: ${index * 0.05}s" onclick="openCategoryPage('${cat.name}')">
@@ -510,8 +514,10 @@
 
         function openCategoryPage(categoryName, showViewFlag = true) {
             const filteredWorkers = workers.filter(w => w.specialty === categoryName);
-            document.getElementById('category-view-title').innerHTML = `تخصص: <span style="color:var(--secondary-light)">${escapeHtml(categoryName)}</span>`;
+            const titleEl = document.getElementById('category-view-title');
+            if (titleEl) titleEl.innerHTML = `تخصص: <span style="color:var(--secondary-light)">${escapeHtml(categoryName)}</span>`;
             const grid = document.getElementById('category-workers-grid');
+            if (!grid) return;
             const favorites = JSON.parse(localStorage.getItem('hirafi_favorites') || '[]');
 
             if (filteredWorkers.length === 0) {
@@ -572,6 +578,7 @@
 
         function renderFavorites() {
             const grid = document.getElementById('favoritesGrid');
+            if (!grid) return;
             const favorites = JSON.parse(localStorage.getItem('hirafi_favorites') || '[]');
             const favoriteWorkers = workers.filter(w => favorites.includes(w.id));
             if (favoriteWorkers.length === 0) {
@@ -605,14 +612,16 @@
         }
 
         // ============================================
-        // 5. وظائف الطلبات (Firebase)
+        // 5. وظائف الطلبات
         // ============================================
         function handleRequestSubmit(event) {
             event.preventDefault();
             const editId = document.getElementById('editRequestId').value;
             const btn = document.getElementById('requestSubmitBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
+            }
 
             const reqData = {
                 clientName: document.getElementById('reqName').value,
@@ -629,25 +638,32 @@
             let promise = editId ? db.ref('requests/' + editId).update(reqData) : db.ref('requests').push(reqData);
 
             promise.then(() => {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-check"></i> تم الحفظ';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check"></i> تم الحفظ';
+                }
                 showMessage('reqMessage', editId ? '✅ تم تحديث الطلب بنجاح!' : '✅ تم نشر طلبك بنجاح!');
                 resetRequestForm();
                 showToast(editId ? '✅ تم تحديث الطلب' : '✅ تم نشر طلبك!');
                 setTimeout(() => showView('view-worker-board'), 1500);
             }).catch(err => {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ! حاول مجدداً';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ! حاول مجدداً';
+                }
                 showToast('❌ حدث خطأ: ' + err.message);
             });
         }
 
         function resetRequestForm() {
-            document.getElementById('requestForm').reset();
-            document.getElementById('editRequestId').value = '';
-            document.getElementById('requestFormTitle').textContent = 'أضف طلب خدمة جديد';
-            document.getElementById('requestSubmitBtnText').textContent = 'نشر الطلب في السوق';
-            document.getElementById('requestSubmitBtn').innerHTML = '<i class="fas fa-paper-plane"></i> <span id="requestSubmitBtnText">نشر الطلب في السوق</span>';
+            const form = document.getElementById('requestForm');
+            if (form) form.reset();
+            const editId = document.getElementById('editRequestId');
+            if (editId) editId.value = '';
+            const titleEl = document.getElementById('requestFormTitle');
+            if (titleEl) titleEl.textContent = 'أضف طلب خدمة جديد';
+            const btn = document.getElementById('requestSubmitBtn');
+            if (btn) btn.innerHTML = '<i class="fas fa-paper-plane"></i> نشر الطلب في السوق';
         }
 
         function editRequestById(reqId) {
@@ -660,9 +676,10 @@
             document.getElementById('reqSpecialty').value = req.specialty;
             document.getElementById('reqDesc').value = req.desc;
             document.getElementById('reqBudget').value = req.budget === 'قابل للنقاش' ? '' : req.budget;
-            document.getElementById('requestFormTitle').textContent = 'تعديل طلب الخدمة';
-            document.getElementById('requestSubmitBtnText').textContent = 'حفظ التعديلات';
-            document.getElementById('requestSubmitBtn').innerHTML = '<i class="fas fa-edit"></i> <span id="requestSubmitBtnText">حفظ التعديلات</span>';
+            const titleEl = document.getElementById('requestFormTitle');
+            if (titleEl) titleEl.textContent = 'تعديل طلب الخدمة';
+            const btn = document.getElementById('requestSubmitBtn');
+            if (btn) btn.innerHTML = '<i class="fas fa-edit"></i> حفظ التعديلات';
             showView('view-add-request');
         }
 
@@ -673,6 +690,7 @@
 
         function renderRequestsBoard() {
             const grid = document.getElementById('requestsGrid');
+            if (!grid) return;
             const openRequests = requests.filter(r => r.status === 'مفتوح').sort((a,b) => b.timestamp - a.timestamp);
             if (openRequests.length === 0) {
                 grid.innerHTML = `<div class="empty-state"><i class="fas fa-clipboard-check"></i><p>لا توجد طلبات جديدة حالياً.</p></div>`;
@@ -711,14 +729,16 @@
         }
 
         // ============================================
-        // 6. وظائف الحرفيين (Firebase)
+        // 6. وظائف الحرفيين
         // ============================================
         function handleWorkerSubmit(event) {
             event.preventDefault();
             const editId = document.getElementById('editWorkerId').value;
             const btn = document.getElementById('workerSubmitBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
+            }
 
             const workerData = {
                 name: document.getElementById('workerName').value,
@@ -732,25 +752,32 @@
             let promise = editId ? db.ref('workers/' + editId).update(workerData) : db.ref('workers').push(workerData);
 
             promise.then(() => {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-check"></i> تم الحفظ';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check"></i> تم الحفظ';
+                }
                 showMessage('workerAddMessage', editId ? '✅ تم تحديث بياناتك بنجاح!' : '✅ تم نشر ملفك بنجاح!');
                 resetWorkerForm();
                 showToast(editId ? '✅ تم تحديث بياناتك' : '✅ تم نشر ملفك!');
                 setTimeout(() => showView('view-home'), 1500);
             }).catch(err => {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ! حاول مجدداً';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ! حاول مجدداً';
+                }
                 showToast('❌ حدث خطأ: ' + err.message);
             });
         }
 
         function resetWorkerForm() {
-            document.getElementById('workerAddForm').reset();
-            document.getElementById('editWorkerId').value = '';
-            document.getElementById('workerFormTitle').textContent = 'انضم كحرفي محترف';
-            document.getElementById('workerSubmitBtnText').textContent = 'نشر الملف في السوق';
-            document.getElementById('workerSubmitBtn').innerHTML = '<i class="fas fa-user-plus"></i> <span id="workerSubmitBtnText">نشر الملف في السوق</span>';
+            const form = document.getElementById('workerAddForm');
+            if (form) form.reset();
+            const editId = document.getElementById('editWorkerId');
+            if (editId) editId.value = '';
+            const titleEl = document.getElementById('workerFormTitle');
+            if (titleEl) titleEl.textContent = 'انضم كحرفي محترف';
+            const btn = document.getElementById('workerSubmitBtn');
+            if (btn) btn.innerHTML = '<i class="fas fa-user-plus"></i> نشر الملف في السوق';
         }
 
         function editWorkerById(workerId) {
@@ -761,9 +788,10 @@
             document.getElementById('workerPhone').value = worker.phone;
             document.getElementById('workerAddress').value = worker.address;
             document.getElementById('workerSpecialty').value = worker.specialty;
-            document.getElementById('workerFormTitle').textContent = 'تعديل بيانات الحرفي';
-            document.getElementById('workerSubmitBtnText').textContent = 'حفظ التعديلات';
-            document.getElementById('workerSubmitBtn').innerHTML = '<i class="fas fa-edit"></i> <span id="workerSubmitBtnText">حفظ التعديلات</span>';
+            const titleEl = document.getElementById('workerFormTitle');
+            if (titleEl) titleEl.textContent = 'تعديل بيانات الحرفي';
+            const btn = document.getElementById('workerSubmitBtn');
+            if (btn) btn.innerHTML = '<i class="fas fa-edit"></i> حفظ التعديلات';
             showView('view-add-worker');
         }
 
@@ -787,13 +815,14 @@
         }
 
         // ============================================
-        // 7. عرض التفاصيل (Profile) بأمان
+        // 7. عرض التفاصيل
         // ============================================
         function showProfileDetailsById(id, type) {
             const personData = type === 'worker' ? workers.find(w => w.id === id) : requests.find(r => r.id === id);
             if (!personData) return;
 
             const card = document.getElementById('profileCard');
+            if (!card) return;
             const name = type === 'worker' ? personData.name : personData.clientName;
             const avatar = name ? escapeHtml(name).charAt(0) : '?';
             const statusBadge = type === 'worker' ?
@@ -854,10 +883,11 @@
         }
 
         // ============================================
-        // 8. قائمة النشاط الأخيرة (Activity Feed)
+        // 8. قائمة النشاط الأخيرة
         // ============================================
         function renderActivityFeed() {
             const feedContainer = document.getElementById('activityFeed');
+            if (!feedContainer) return;
             const allActivity = [
                 ...workers.map(w => ({...w, type: 'worker'})),
                 ...requests.map(r => ({...r, type: 'request'}))
@@ -889,10 +919,11 @@
         }
 
         // ============================================
-        // 9. وظائف الدردشة (محلية للتجربة)
+        // 9. وظائف الدردشة
         // ============================================
         function renderChatList() {
             const container = document.getElementById('chatListItemsSide');
+            if (!container) return;
             if (chats.length === 0) {
                 container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">لا توجد محادثات.</div>`;
                 return;
@@ -908,15 +939,20 @@
             currentChatId = chatId;
             document.querySelectorAll('.chat-list-item').forEach(el => el.classList.remove('active'));
             if (event && event.currentTarget) event.currentTarget.classList.add('active');
-            document.getElementById('chatPlaceholder').style.display = 'none';
-            document.getElementById('activeChatWindow').style.display = 'flex';
-            document.getElementById('chatHeaderName').textContent = targetName || 'مستخدم';
-            document.getElementById('chatHeaderAvatar').textContent = targetName ? targetName.charAt(0) : '?';
+            const placeholder = document.getElementById('chatPlaceholder');
+            const activeWindow = document.getElementById('activeChatWindow');
+            if (placeholder) placeholder.style.display = 'none';
+            if (activeWindow) activeWindow.style.display = 'flex';
+            const headerName = document.getElementById('chatHeaderName');
+            const headerAvatar = document.getElementById('chatHeaderAvatar');
+            if (headerName) headerName.textContent = targetName || 'مستخدم';
+            if (headerAvatar) headerAvatar.textContent = targetName ? targetName.charAt(0) : '?';
             renderMessages(chatId);
         }
 
         function renderMessages(chatId) {
             const container = document.getElementById('chatMessages');
+            if (!container) return;
             container.innerHTML = '';
             const chatMessages = messages[chatId] || [];
             if (chatMessages.length === 0) {
@@ -962,8 +998,10 @@
             localStorage.setItem('hirafi_chats_local', JSON.stringify(chats));
             localStorage.setItem('hirafi_messages_local', JSON.stringify(messages));
             currentChatId = null;
-            document.getElementById('chatPlaceholder').style.display = 'flex';
-            document.getElementById('activeChatWindow').style.display = 'none';
+            const placeholder = document.getElementById('chatPlaceholder');
+            const activeWindow = document.getElementById('activeChatWindow');
+            if (placeholder) placeholder.style.display = 'flex';
+            if (activeWindow) activeWindow.style.display = 'none';
             renderChatList();
             showToast('✅ تم حذف المحادثة');
         }
