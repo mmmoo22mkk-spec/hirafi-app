@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>حِرَفي - سوق العمّال والمقاولات المفتوح</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@700&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@700&family=Tajawal:wght@400;500;700;900&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -28,7 +28,7 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html { scroll-behavior: smooth; }
-        body { font-family: 'Tajawal', 'Cairo', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; transition: background 0.5s ease, color 0.5s ease; overflow-x: hidden; }
+        body { font-family: 'Tajawal', 'Cairo', 'Noto Nastaliq Urdu', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; transition: background 0.5s ease, color 0.5s ease; overflow-x: hidden; }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
@@ -62,7 +62,13 @@
         .btn-warning { background: linear-gradient(135deg, #f39c12, #f1c40f); color: white; }
         .btn-outline { background: transparent; border: 2px solid var(--secondary); color: var(--secondary); }
         .btn-outline:hover { background: var(--secondary); color: white; }
+        .btn-urdu { font-family: 'Noto Nastaliq Urdu', serif; }
         .menu-toggle { display: none; background: none; border: none; font-size: 22px; color: var(--text); cursor: pointer; padding: 8px; }
+
+        .language-selector { display: flex; gap: 6px; align-items: center; margin-right: 8px; }
+        .lang-btn { background: transparent; border: 2px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 700; transition: var(--transition); }
+        .lang-btn:hover, .lang-btn.active { border-color: var(--secondary); background: var(--secondary); color: white; }
+        .lang-btn-urdu { font-family: 'Noto Nastaliq Urdu', serif; font-size: 14px; }
 
         .hero { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; padding: 50px 0 60px; position: relative; overflow: hidden; border-bottom: 3px solid var(--secondary); text-align: center; }
         .hero::before { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); animation: float 6s ease-in-out infinite; }
@@ -181,6 +187,8 @@
             .chat-integrated-wrapper { grid-template-columns: 1fr; height: 85vh; }
             .form-row { grid-template-columns: 1fr; }
             .profile-actions { grid-template-columns: 1fr; }
+            .language-selector { margin-right: 4px; }
+            .lang-btn { padding: 2px 6px; font-size: 10px; }
         }
     </style>
 </head>
@@ -192,16 +200,20 @@
         <div class="nav-wrap">
             <div class="logo" onclick="showView('view-home')">
                 <i class="fas fa-tools"></i>
-                <span>حِرَفي</span>
+                <span id="logo-text">حِرَفي</span>
             </div>
             <div class="nav-links" id="navLinks">
-                <a onclick="showView('view-home')">السوق الرئيسي</a>
-                <a onclick="showView('view-add-request')" class="btn" style="background: var(--accent); color: white;"><i class="fas fa-plus-circle"></i> أضف طلب</a>
-                <a onclick="showView('view-worker-board')"><i class="fas fa-briefcase"></i> لوحة الفرص</a>
-                <a onclick="showView('view-add-worker')"><i class="fas fa-user-plus"></i> سجل كحرفي</a>
-                <a onclick="showView('view-chat')"><i class="fas fa-comments"></i> الدردشة</a>
-                <a onclick="showView('view-favorites')"><i class="fas fa-heart"></i> المفضلة</a>
-                <button class="btn btn-outline" onclick="toggleTheme()"><i class="fas fa-adjust"></i> المظهر</button>
+                <a onclick="showView('view-home')" id="nav-home">السوق الرئيسي</a>
+                <a onclick="showView('view-add-request')" class="btn" style="background: var(--accent); color: white;" id="nav-add-request"><i class="fas fa-plus-circle"></i> <span>أضف طلب</span></a>
+                <a onclick="showView('view-worker-board')" id="nav-board"><i class="fas fa-briefcase"></i> <span>لوحة الفرص</span></a>
+                <a onclick="showView('view-add-worker')" id="nav-add-worker"><i class="fas fa-user-plus"></i> <span>سجل كحرفي</span></a>
+                <a onclick="showView('view-chat')" id="nav-chat"><i class="fas fa-comments"></i> <span>الدردشة</span></a>
+                <a onclick="showView('view-favorites')" id="nav-favorites"><i class="fas fa-heart"></i> <span>المفضلة</span></a>
+                <div class="language-selector">
+                    <button class="lang-btn active" onclick="setLanguage('ar')" id="lang-ar">عربي</button>
+                    <button class="lang-btn lang-btn-urdu" onclick="setLanguage('ur')" id="lang-ur">اردو</button>
+                </div>
+                <button class="btn btn-outline" onclick="toggleTheme()"><i class="fas fa-adjust"></i> <span id="nav-theme">المظهر</span></button>
             </div>
             <button class="menu-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
         </div>
@@ -211,27 +223,27 @@
         <div id="view-home" class="app-view active">
             <section class="hero">
                 <div class="container">
-                    <h1>ابحث عن أفضل <span>العمّال المحترفين</span></h1>
-                    <p>أو أضف طلبك الآن ودع الحرفيين يتواصلون معك مباشرة</p>
+                    <h1 id="hero-title">ابحث عن أفضل <span>العمّال المحترفين</span></h1>
+                    <p id="hero-desc">أو أضف طلبك الآن ودع الحرفيين يتواصلون معك مباشرة</p>
                     <div class="search-box">
                         <input type="text" id="heroSearch" placeholder="ابحث عن تخصص... (مثال: كهرباء، سباكة)" onkeypress="if(event.key==='Enter')searchCategory()">
-                        <button class="btn" onclick="searchCategory()"><i class="fas fa-search"></i> بحث</button>
+                        <button class="btn" onclick="searchCategory()" id="hero-search-btn"><i class="fas fa-search"></i> بحث</button>
                     </div>
                 </div>
             </section>
             <section>
                 <div class="container">
                     <div class="section-title">
-                        <h2>تصفح حسب التخصص</h2>
-                        <p>اختر المجال لعرض قائمة الحرفيين المتاحين للتواصل الفوري</p>
+                        <h2 id="categories-title">تصفح حسب التخصص</h2>
+                        <p id="categories-desc">اختر المجال لعرض قائمة الحرفيين المتاحين للتواصل الفوري</p>
                     </div>
                     <div class="categories-grid" id="categoriesGrid"></div>
                     <div class="section-title" style="margin-top: 50px;">
-                        <h2><i class="fas fa-clock" style="color: var(--secondary);"></i> آخر المنضمين والنشاط</h2>
-                        <p>أحدث الحرفيين والطلبات المضافة للمنصة (تحديث مباشر)</p>
+                        <h2 id="activity-title"><i class="fas fa-clock" style="color: var(--secondary);"></i> آخر المنضمين والنشاط</h2>
+                        <p id="activity-desc">أحدث الحرفيين والطلبات المضافة للمنصة (تحديث مباشر)</p>
                     </div>
                     <div class="activity-feed" id="activityFeed">
-                        <div style="text-align:center; padding:20px; color:var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> جاري تحميل النشاط...</div>
+                        <div style="text-align:center; padding:20px; color:var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> <span id="loading-activity">جاري تحميل النشاط...</span></div>
                     </div>
                 </div>
             </section>
@@ -239,7 +251,7 @@
 
         <div id="view-category" class="app-view">
             <section><div class="container">
-                <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;"><i class="fas fa-arrow-right"></i> رجوع للسوق الرئيسي</button>
+                <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;" id="back-home-btn"><i class="fas fa-arrow-right"></i> رجوع للسوق الرئيسي</button>
                 <div class="section-title"><h2 id="category-view-title">تخصص: </h2></div>
                 <div class="grid-container" id="category-workers-grid"></div>
             </div></section>
@@ -247,30 +259,30 @@
 
         <div id="view-add-request" class="app-view">
             <section><div class="container">
-                <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;" id="back-from-request"><i class="fas fa-arrow-right"></i> رجوع</button>
                 <div class="section-title"><h2><i class="fas fa-clipboard-list" style="color:var(--secondary)"></i> <span id="requestFormTitle">أضف طلب خدمة جديد</span></h2></div>
                 <div class="form-container">
                     <form id="requestForm" onsubmit="handleRequestSubmit(event)">
                         <input type="hidden" id="editRequestId" value="">
                         <div class="form-row">
-                            <div class="form-group"><label>الاسم الكريم <span style="color:var(--accent)">*</span></label><input type="text" id="reqName" required placeholder="اسمك للتواصل"></div>
-                            <div class="form-group"><label>رقم الجوال <span style="color:var(--accent)">*</span></label><input type="tel" id="reqPhone" required placeholder="05xxxxxxxx"></div>
+                            <div class="form-group"><label id="req-name-label">الاسم الكريم <span style="color:var(--accent)">*</span></label><input type="text" id="reqName" required placeholder="اسمك للتواصل"></div>
+                            <div class="form-group"><label id="req-phone-label">رقم الجوال <span style="color:var(--accent)">*</span></label><input type="tel" id="reqPhone" required placeholder="05xxxxxxxx"></div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group"><label>المدينة / الحي <span style="color:var(--accent)">*</span></label><input type="text" id="reqLocation" required placeholder="مثال: الرياض - حي الملقا"></div>
-                            <div class="form-group"><label>التخصص المطلوب <span style="color:var(--accent)">*</span></label>
+                            <div class="form-group"><label id="req-location-label">المدينة / الحي <span style="color:var(--accent)">*</span></label><input type="text" id="reqLocation" required placeholder="مثال: الرياض - حي الملقا"></div>
+                            <div class="form-group"><label id="req-specialty-label">التخصص المطلوب <span style="color:var(--accent)">*</span></label>
                                 <select id="reqSpecialty" required>
-                                    <option value="">-- اختر التخصص --</option>
-                                    <option value="كهرباء">كهرباء</option><option value="سباكة">سباكة</option>
-                                    <option value="بناء">بناء</option><option value="لياسة">لياسة</option>
-                                    <option value="بلاط">بلاط</option><option value="دهانات">دهانات / بوية</option>
-                                    <option value="نجارة">نجارة</option><option value="حدادة">حدادة</option>
-                                    <option value="تبريد">تبريد وتكييف</option><option value="أخرى">أخرى</option>
+                                    <option value="" id="req-specialty-placeholder">-- اختر التخصص --</option>
+                                    <option value="كهرباء" id="spec-electric">كهرباء</option><option value="سباكة" id="spec-plumbing">سباكة</option>
+                                    <option value="بناء" id="spec-construction">بناء</option><option value="لياسة" id="spec-plaster">لياسة</option>
+                                    <option value="بلاط" id="spec-tiles">بلاط</option><option value="دهانات" id="spec-paint">دهانات / بوية</option>
+                                    <option value="نجارة" id="spec-carpentry">نجارة</option><option value="حدادة" id="spec-blacksmith">حدادة</option>
+                                    <option value="تبريد" id="spec-ac">تبريد وتكييف</option><option value="أخرى" id="spec-other">أخرى</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="form-group"><label>وصف المشكلة أو الخدمة المطلوبة <span style="color:var(--accent)">*</span></label><textarea id="reqDesc" required placeholder="مثال: مكيف سبليت 18 ألف وحدة لا يبرد..." style="min-height:100px;"></textarea></div>
-                        <div class="form-group"><label>الميزانية المقترحة (اختياري)</label><input type="text" id="reqBudget" placeholder="مثال: 150 - 200 ريال"></div>
+                        <div class="form-group"><label id="req-desc-label">وصف المشكلة أو الخدمة المطلوبة <span style="color:var(--accent)">*</span></label><textarea id="reqDesc" required placeholder="مثال: مكيف سبليت 18 ألف وحدة لا يبرد..." style="min-height:100px;"></textarea></div>
+                        <div class="form-group"><label id="req-budget-label">الميزانية المقترحة (اختياري)</label><input type="text" id="reqBudget" placeholder="مثال: 150 - 200 ريال"></div>
                         <button type="submit" class="btn btn-success" style="width:100%; justify-content:center;" id="requestSubmitBtn"><i class="fas fa-paper-plane"></i> نشر الطلب في السوق</button>
                         <div id="reqMessage" class="success-message"></div>
                     </form>
@@ -280,36 +292,36 @@
 
         <div id="view-worker-board" class="app-view">
             <section><div class="container">
-                <div class="section-title"><h2><i class="fas fa-briefcase" style="color:var(--secondary)"></i> لوحة فرص العمل</h2></div>
+                <div class="section-title"><h2 id="board-title"><i class="fas fa-briefcase" style="color:var(--secondary)"></i> لوحة فرص العمل</h2></div>
                 <div class="grid-container" id="requestsGrid"></div>
             </div></section>
         </div>
 
         <div id="view-add-worker" class="app-view">
             <section><div class="container">
-                <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;" id="back-from-worker"><i class="fas fa-arrow-right"></i> رجوع</button>
                 <div class="section-title"><h2><span id="workerFormTitle">انضم كحرفي محترف</span></h2></div>
                 <div class="form-container">
                     <form id="workerAddForm" onsubmit="handleWorkerSubmit(event)">
                         <input type="hidden" id="editWorkerId" value="">
                         <div class="form-row">
-                            <div class="form-group"><label>الاسم الكامل <span style="color:var(--accent)">*</span></label><input type="text" id="workerName" required placeholder="الاسم كما سيظهر للعملاء"></div>
-                            <div class="form-group"><label>رقم الجوال <span style="color:var(--accent)">*</span></label><input type="tel" id="workerPhone" required placeholder="05xxxxxxxx"></div>
+                            <div class="form-group"><label id="worker-name-label">الاسم الكامل <span style="color:var(--accent)">*</span></label><input type="text" id="workerName" required placeholder="الاسم كما سيظهر للعملاء"></div>
+                            <div class="form-group"><label id="worker-phone-label">رقم الجوال <span style="color:var(--accent)">*</span></label><input type="tel" id="workerPhone" required placeholder="05xxxxxxxx"></div>
                         </div>
-                        <div class="form-group"><label>العنوان / المدينة <span style="color:var(--accent)">*</span></label>
+                        <div class="form-group"><label id="worker-address-label">العنوان / المدينة <span style="color:var(--accent)">*</span></label>
                             <div style="display:flex; gap:10px;">
                                 <input type="text" id="workerAddress" required placeholder="مثال: الرياض - حي الملقا" style="flex:1;">
-                                <button type="button" class="btn" onclick="addAddressAuto()" style="white-space:nowrap;"><i class="fas fa-location-crosshairs"></i> موقعي</button>
+                                <button type="button" class="btn" onclick="addAddressAuto()" style="white-space:nowrap;" id="location-btn"><i class="fas fa-location-crosshairs"></i> موقعي</button>
                             </div>
                         </div>
-                        <div class="form-group"><label>التخصص <span style="color:var(--accent)">*</span></label>
+                        <div class="form-group"><label id="worker-specialty-label">التخصص <span style="color:var(--accent)">*</span></label>
                             <select id="workerSpecialty" required>
-                                <option value="">-- اختر التخصص --</option>
-                                <option value="كهرباء">كهرباء</option><option value="سباكة">سباكة</option>
-                                <option value="بناء">بناء</option><option value="لياسة">لياسة</option>
-                                <option value="بلاط">بلاط</option><option value="دهانات">دهانات / بوية</option>
-                                <option value="نجارة">نجارة</option><option value="حدادة">حدادة</option>
-                                <option value="تبريد">تبريد وتكييف</option><option value="أخرى">أخرى</option>
+                                <option value="" id="worker-specialty-placeholder">-- اختر التخصص --</option>
+                                <option value="كهرباء" id="w-spec-electric">كهرباء</option><option value="سباكة" id="w-spec-plumbing">سباكة</option>
+                                <option value="بناء" id="w-spec-construction">بناء</option><option value="لياسة" id="w-spec-plaster">لياسة</option>
+                                <option value="بلاط" id="w-spec-tiles">بلاط</option><option value="دهانات" id="w-spec-paint">دهانات / بوية</option>
+                                <option value="نجارة" id="w-spec-carpentry">نجارة</option><option value="حدادة" id="w-spec-blacksmith">حدادة</option>
+                                <option value="تبريد" id="w-spec-ac">تبريد وتكييف</option><option value="أخرى" id="w-spec-other">أخرى</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-success" style="width:100%; justify-content:center;" id="workerSubmitBtn"><i class="fas fa-user-plus"></i> نشر الملف في السوق</button>
@@ -321,36 +333,36 @@
 
         <div id="view-profile" class="app-view">
             <section><div class="container">
-                <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;" id="back-from-profile"><i class="fas fa-arrow-right"></i> رجوع</button>
                 <div class="profile-card" id="profileCard"></div>
             </div></section>
         </div>
 
         <div id="view-favorites" class="app-view">
             <section><div class="container">
-                <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;"><i class="fas fa-arrow-right"></i> رجوع</button>
-                <div class="section-title"><h2><i class="fas fa-heart" style="color:var(--accent)"></i> المفضلة</h2></div>
+                <button class="btn btn-outline" onclick="showView('view-home')" style="margin-bottom: 20px;" id="back-from-favorites"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <div class="section-title"><h2 id="favorites-title"><i class="fas fa-heart" style="color:var(--accent)"></i> المفضلة</h2></div>
                 <div class="grid-container" id="favoritesGrid"></div>
             </div></section>
         </div>
 
         <div id="view-chat" class="app-view">
             <section><div class="container">
-                <div class="section-title"><h2><i class="fas fa-comments"></i> الدردشة المباشرة</h2></div>
+                <div class="section-title"><h2 id="chat-title"><i class="fas fa-comments"></i> الدردشة المباشرة</h2></div>
                 <div class="chat-integrated-wrapper">
                     <div class="chat-list-side" id="chatListSide">
-                        <h3 style="font-size:15px; color:var(--text-muted); margin-bottom:12px;"><i class="fas fa-comment-dots" style="color:var(--secondary)"></i> محادثاتك</h3>
+                        <h3 style="font-size:15px; color:var(--text-muted); margin-bottom:12px;" id="chat-list-title"><i class="fas fa-comment-dots" style="color:var(--secondary)"></i> محادثاتك</h3>
                         <div id="chatListItemsSide"></div>
                     </div>
                     <div class="chat-window-integrated" id="chatWindowIntegrated">
-                        <div id="chatPlaceholder" class="chat-placeholder"><i class="fas fa-comment"></i><p>اختر محادثة من القائمة</p></div>
+                        <div id="chatPlaceholder" class="chat-placeholder"><i class="fas fa-comment"></i><p id="chat-placeholder-text">اختر محادثة من القائمة</p></div>
                         <div id="activeChatWindow" class="active-chat-window">
                             <div class="chat-header">
                                 <div class="chat-header-info">
                                     <div class="avatar" id="chatHeaderAvatar">م</div>
                                     <div><div class="name" id="chatHeaderName" style="font-weight:700;">اسم المستخدم</div></div>
                                 </div>
-                                <button onclick="deleteCurrentChatLocally()" style="background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;"><i class="fas fa-trash"></i> حذف</button>
+                                <button onclick="deleteCurrentChatLocally()" style="background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;" id="chat-delete-btn"><i class="fas fa-trash"></i> حذف</button>
                             </div>
                             <div class="chat-messages" id="chatMessages"></div>
                             <div class="chat-input-area">
@@ -364,10 +376,10 @@
         </div>
     </main>
 
-    <button class="chat-float-btn" onclick="showView('view-chat')" title="فتح الدردشة"><i class="fas fa-comment"></i></button>
+    <button class="chat-float-btn" onclick="showView('view-chat')" title="فتح الدردشة" id="chat-float-btn"><i class="fas fa-comment"></i></button>
 
     <footer>
-        <div class="container"><div class="footer-logo"><i class="fas fa-tools"></i><span>حِرَفي</span></div><p>© 2026 حِرَفي - سوق العمّال والمقاولات المفتوح</p></div>
+        <div class="container"><div class="footer-logo"><i class="fas fa-tools"></i><span id="footer-logo-text">حِرَفي</span></div><p id="footer-text">© 2026 حِرَفي - سوق العمّال والمقاولات المفتوح</p></div>
     </footer>
 
     <script>
@@ -387,7 +399,312 @@
         const db = firebase.database();
 
         // ============================================
-        // 1. إعدادات النظام
+        // 1. إعدادات النظام والترجمة
+        // ============================================
+        let currentLang = localStorage.getItem('hirafi_lang') || 'ar';
+        
+        const translations = {
+            ar: {
+                // الهيدر
+                'logo-text': 'حِرَفي',
+                'nav-home': 'السوق الرئيسي',
+                'nav-add-request': 'أضف طلب',
+                'nav-board': 'لوحة الفرص',
+                'nav-add-worker': 'سجل كحرفي',
+                'nav-chat': 'الدردشة',
+                'nav-favorites': 'المفضلة',
+                'nav-theme': 'المظهر',
+                // الهيرو
+                'hero-title': 'ابحث عن أفضل <span>العمّال المحترفين</span>',
+                'hero-desc': 'أو أضف طلبك الآن ودع الحرفيين يتواصلون معك مباشرة',
+                'hero-search-btn': 'بحث',
+                // الأقسام
+                'categories-title': 'تصفح حسب التخصص',
+                'categories-desc': 'اختر المجال لعرض قائمة الحرفيين المتاحين للتواصل الفوري',
+                'activity-title': 'آخر المنضمين والنشاط',
+                'activity-desc': 'أحدث الحرفيين والطلبات المضافة للمنصة (تحديث مباشر)',
+                'loading-activity': 'جاري تحميل النشاط...',
+                // عام
+                'back-home-btn': 'رجوع للسوق الرئيسي',
+                'back-from-request': 'رجوع',
+                'back-from-worker': 'رجوع',
+                'back-from-profile': 'رجوع',
+                'back-from-favorites': 'رجوع',
+                // الطلبات
+                'requestFormTitle': 'أضف طلب خدمة جديد',
+                'req-name-label': 'الاسم الكريم',
+                'req-phone-label': 'رقم الجوال',
+                'req-location-label': 'المدينة / الحي',
+                'req-specialty-label': 'التخصص المطلوب',
+                'req-specialty-placeholder': '-- اختر التخصص --',
+                'spec-electric': 'كهرباء',
+                'spec-plumbing': 'سباكة',
+                'spec-construction': 'بناء',
+                'spec-plaster': 'لياسة',
+                'spec-tiles': 'بلاط',
+                'spec-paint': 'دهانات / بوية',
+                'spec-carpentry': 'نجارة',
+                'spec-blacksmith': 'حدادة',
+                'spec-ac': 'تبريد وتكييف',
+                'spec-other': 'أخرى',
+                'req-desc-label': 'وصف المشكلة أو الخدمة المطلوبة',
+                'req-budget-label': 'الميزانية المقترحة (اختياري)',
+                'requestSubmitBtn': 'نشر الطلب في السوق',
+                // الحرفي
+                'workerFormTitle': 'انضم كحرفي محترف',
+                'worker-name-label': 'الاسم الكامل',
+                'worker-phone-label': 'رقم الجوال',
+                'worker-address-label': 'العنوان / المدينة',
+                'worker-specialty-label': 'التخصص',
+                'worker-specialty-placeholder': '-- اختر التخصص --',
+                'workerSubmitBtn': 'نشر الملف في السوق',
+                'location-btn': 'موقعي',
+                // لوحة الفرص
+                'board-title': 'لوحة فرص العمل',
+                // المفضلة
+                'favorites-title': 'المفضلة',
+                // الدردشة
+                'chat-title': 'الدردشة المباشرة',
+                'chat-list-title': 'محادثاتك',
+                'chat-placeholder-text': 'اختر محادثة من القائمة',
+                'chat-delete-btn': 'حذف',
+                // كلمات عامة
+                'available': 'متاح',
+                'details': 'التفاصيل',
+                'call': 'اتصال',
+                'whatsapp': 'واتساب',
+                'add_to_favorites': 'أضف للمفضلة',
+                'favorite': 'مفضل',
+                'remove_from_favorites': 'تم الإزالة من المفضلة',
+                'added_to_favorites': 'تمت الإضافة للمفضلة ❤️',
+                'no_workers': 'لا يوجد حرفيون في هذا التخصص حالياً.',
+                'no_requests': 'لا توجد طلبات جديدة حالياً.',
+                'no_favorites': 'لا توجد حرفيين في المفضلة حالياً.',
+                'no_chats': 'لا توجد محادثات.',
+                'no_activity': 'لا يوجد نشاط حديث على المنصة.',
+                'edit': 'تعديل',
+                'delete': 'حذف',
+                'confirm_delete': 'هل أنت متأكد من حذف هذا الطلب نهائياً؟',
+                'confirm_delete_worker': 'هل أنت متأكد من حذف ملفك نهائياً من المنصة؟',
+                'confirm_delete_chat': 'حذف هذه المحادثة من قائمتك؟',
+                'chat_deleted': '✅ تم حذف المحادثة من قائمتك',
+                'request_updated': '✅ تم تحديث الطلب',
+                'request_published': '✅ تم نشر طلبك!',
+                'worker_updated': '✅ تم تحديث بياناتك',
+                'worker_published': '✅ تم نشر ملفك!',
+                'deleted': '✅ تم حذف الطلب',
+                'deleted_worker': '✅ تم حذف الملف بنجاح',
+                'error': '❌ حدث خطأ: ',
+                'not_found': '⚠️ لم يتم العثور على التخصص',
+                'start_chat': 'بدء محادثة...',
+                'chat_placeholder': 'ابدأ المحادثة الآن',
+                'type_message': 'اكتب رسالتك هنا...',
+                'unknown': 'مستخدم',
+            },
+            ur: {
+                // ہیڈر
+                'logo-text': 'حِرَفي',
+                'nav-home': 'مرکزی مارکیٹ',
+                'nav-add-request': 'درخواست دیں',
+                'nav-board': 'موقعوں کا بورڈ',
+                'nav-add-worker': 'کاریگر کے طور پر رجسٹر کریں',
+                'nav-chat': 'چیٹ',
+                'nav-favorites': 'پسندیدہ',
+                'nav-theme': 'تھیم',
+                // ہیرو
+                'hero-title': 'بہترین <span>پیشہ ور کاریگروں</span> کو تلاش کریں',
+                'hero-desc': 'یا ابھی اپنی درخواست دیں اور کاریگر براہ راست آپ سے رابطہ کریں',
+                'hero-search-btn': 'تلاش کریں',
+                // سیکشنز
+                'categories-title': 'مہارت کے مطابق براؤز کریں',
+                'categories-desc': 'فوری رابطے کے لیے دستیاب کاریگروں کی فہرست دیکھنے کے لیے فیلڈ منتخب کریں',
+                'activity-title': 'تازہ ترین شاملین اور سرگرمی',
+                'activity-desc': 'پلیٹ فارم پر شامل تازہ ترین کاریگر اور درخواستیں (براہ راست اپ ڈیٹ)',
+                'loading-activity': 'سرگرمی لوڈ ہو رہی ہے...',
+                // عام
+                'back-home-btn': 'مرکزی مارکیٹ میں واپس جائیں',
+                'back-from-request': 'واپس جائیں',
+                'back-from-worker': 'واپس جائیں',
+                'back-from-profile': 'واپس جائیں',
+                'back-from-favorites': 'واپس جائیں',
+                // درخواستیں
+                'requestFormTitle': 'نئی سروس کی درخواست دیں',
+                'req-name-label': 'مکمل نام',
+                'req-phone-label': 'موبائل نمبر',
+                'req-location-label': 'شہر / علاقہ',
+                'req-specialty-label': 'مطلوبہ مہارت',
+                'req-specialty-placeholder': '-- مہارت منتخب کریں --',
+                'spec-electric': 'الیکٹریشن',
+                'spec-plumbing': 'پلمبر',
+                'spec-construction': 'تعمیرات',
+                'spec-plaster': 'پلاسٹر',
+                'spec-tiles': 'ٹائلیں',
+                'spec-paint': 'پینٹنگ',
+                'spec-carpentry': 'بڑھئی',
+                'spec-blacksmith': 'لوہار',
+                'spec-ac': 'ایئر کنڈیشننگ',
+                'spec-other': 'دیگر',
+                'req-desc-label': 'مسئلہ یا مطلوبہ سروس کی تفصیل',
+                'req-budget-label': 'تجویز کردہ بجٹ (اختیاری)',
+                'requestSubmitBtn': 'مارکیٹ میں درخواست شائع کریں',
+                // کاریگر
+                'workerFormTitle': 'پیشہ ور کاریگر کے طور پر شامل ہوں',
+                'worker-name-label': 'مکمل نام',
+                'worker-phone-label': 'موبائل نمبر',
+                'worker-address-label': 'پتہ / شہر',
+                'worker-specialty-label': 'مہارت',
+                'worker-specialty-placeholder': '-- مہارت منتخب کریں --',
+                'workerSubmitBtn': 'مارکیٹ میں پروفائل شائع کریں',
+                'location-btn': 'میرا مقام',
+                // بورڈ
+                'board-title': 'ملازمتوں کا بورڈ',
+                // پسندیدہ
+                'favorites-title': 'پسندیدہ',
+                // چیٹ
+                'chat-title': 'براہ راست چیٹ',
+                'chat-list-title': 'آپ کی چیٹس',
+                'chat-placeholder-text': 'فہرست سے چیٹ منتخب کریں',
+                'chat-delete-btn': 'حذف کریں',
+                // عام الفاظ
+                'available': 'دستیاب',
+                'details': 'تفصیلات',
+                'call': 'کال کریں',
+                'whatsapp': 'واٹس ایپ',
+                'add_to_favorites': 'پسندیدہ میں شامل کریں',
+                'favorite': 'پسندیدہ',
+                'remove_from_favorites': 'پسندیدہ سے ہٹا دیا گیا',
+                'added_to_favorites': 'پسندیدہ میں شامل کر دیا گیا ❤️',
+                'no_workers': 'اس مہارت میں فی الحال کوئی کاریگر نہیں ہے۔',
+                'no_requests': 'فی الحال کوئی نئی درخواستیں نہیں ہیں۔',
+                'no_favorites': 'فی الحال پسندیدہ میں کوئی کاریگر نہیں ہے۔',
+                'no_chats': 'کوئی چیٹ نہیں ہے۔',
+                'no_activity': 'پلیٹ فارم پر کوئی حالیہ سرگرمی نہیں ہے۔',
+                'edit': 'ترمیم کریں',
+                'delete': 'حذف کریں',
+                'confirm_delete': 'کیا آپ اس درخواست کو مستقل طور پر حذف کرنے کے یقین ہیں؟',
+                'confirm_delete_worker': 'کیا آپ اپنا پروفائل پلیٹ فارم سے مستقل طور پر حذف کرنے کے یقین ہیں؟',
+                'confirm_delete_chat': 'کیا آپ اس چیٹ کو اپنی فہرست سے حذف کرنا چاہتے ہیں؟',
+                'chat_deleted': '✅ چیٹ آپ کی فہرست سے حذف کر دی گئی',
+                'request_updated': '✅ درخواست اپ ڈیٹ کر دی گئی',
+                'request_published': '✅ آپ کی درخواست شائع کر دی گئی!',
+                'worker_updated': '✅ آپ کا ڈیٹا اپ ڈیٹ کر دیا گیا',
+                'worker_published': '✅ آپ کا پروفائل شائع کر دیا گیا!',
+                'deleted': '✅ درخواست حذف کر دی گئی',
+                'deleted_worker': '✅ پروفائل کامیابی سے حذف کر دیا گیا',
+                'error': '❌ خرابی: ',
+                'not_found': '⚠️ مہارت نہیں ملی',
+                'start_chat': 'چیٹ شروع کریں...',
+                'chat_placeholder': 'ابھی چیٹ شروع کریں',
+                'type_message': 'اپنا پیغام یہاں لکھیں...',
+                'unknown': 'صارف',
+            }
+        };
+
+        let currentLanguage = 'ar';
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('hirafi_lang', lang);
+            
+            // تحديث أزرار اللغة
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('lang-' + lang).classList.add('active');
+            
+            // تطبيق الترجمة على جميع العناصر
+            applyTranslations(lang);
+            
+            // إعادة عرض المحتوى الديناميكي
+            renderCategories();
+            renderActivityFeed();
+            if (document.getElementById('view-worker-board').classList.contains('active')) renderRequestsBoard();
+            if (document.getElementById('view-favorites').classList.contains('active')) renderFavorites();
+        }
+
+        function applyTranslations(lang) {
+            const t = translations[lang];
+            if (!t) return;
+            
+            document.querySelectorAll('[id]').forEach(el => {
+                const id = el.id;
+                if (t[id] !== undefined) {
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        if (el.placeholder !== undefined && t[id + '-placeholder']) {
+                            el.placeholder = t[id + '-placeholder'];
+                        }
+                    } else if (el.tagName === 'BUTTON' && el.id !== 'requestSubmitBtn' && el.id !== 'workerSubmitBtn') {
+                        // تخطي الأزرار الخاصة بالنماذج
+                    } else {
+                        // التأكد من عدم وجود عناصر داخلية مثل <span> في النص
+                        if (!el.querySelector('span') && !el.querySelector('i')) {
+                            el.textContent = t[id];
+                        }
+                    }
+                }
+            });
+            
+            // تحديث النصوص التي تحتوي على <span>
+            const heroTitle = document.getElementById('hero-title');
+            if (heroTitle) heroTitle.innerHTML = t['hero-title'];
+            
+            // تحديث أزرار النماذج
+            const reqBtn = document.getElementById('requestSubmitBtn');
+            if (reqBtn) {
+                const icon = reqBtn.querySelector('i');
+                reqBtn.innerHTML = '';
+                if (icon) reqBtn.appendChild(icon);
+                reqBtn.appendChild(document.createTextNode(' ' + t['requestSubmitBtn']));
+            }
+            
+            const workerBtn = document.getElementById('workerSubmitBtn');
+            if (workerBtn) {
+                const icon = workerBtn.querySelector('i');
+                workerBtn.innerHTML = '';
+                if (icon) workerBtn.appendChild(icon);
+                workerBtn.appendChild(document.createTextNode(' ' + t['workerSubmitBtn']));
+            }
+            
+            // تحديث زر المظهر
+            const themeBtn = document.getElementById('nav-theme');
+            if (themeBtn) themeBtn.textContent = t['nav-theme'];
+            
+            // تحديث خيارات التخصص في نماذج الطلبات والحرفيين
+            updateSelectOptions(lang);
+        }
+
+        function updateSelectOptions(lang) {
+            const t = translations[lang];
+            const specialtyMap = {
+                'spec-electric': 'كهرباء',
+                'spec-plumbing': 'سباكة',
+                'spec-construction': 'بناء',
+                'spec-plaster': 'لياسة',
+                'spec-tiles': 'بلاط',
+                'spec-paint': 'دهانات',
+                'spec-carpentry': 'نجارة',
+                'spec-blacksmith': 'حدادة',
+                'spec-ac': 'تبريد',
+                'spec-other': 'أخرى'
+            };
+            
+            // تحديث خيارات التخصص في نموذج الطلب
+            document.querySelectorAll('#reqSpecialty option').forEach(opt => {
+                const id = opt.id;
+                if (id && t[id] !== undefined) {
+                    opt.textContent = t[id];
+                }
+            });
+            
+            // تحديث خيارات التخصص في نموذج الحرفي
+            document.querySelectorAll('#workerSpecialty option').forEach(opt => {
+                const id = opt.id;
+                if (id && t[id] !== undefined) {
+                    opt.textContent = t[id];
+                }
+            });
+        }
+
+        // ============================================
+        // 2. إعدادات النظام الأساسية
         // ============================================
         let myUserId = localStorage.getItem('hirafi_user_id');
         if (!myUserId) {
@@ -410,7 +727,7 @@
         ];
 
         // ============================================
-        // 2. Firebase Real-time Listeners
+        // 3. Firebase Real-time Listeners
         // ============================================
         db.ref('workers').on('value', (snapshot) => {
             workers = [];
@@ -418,7 +735,7 @@
             renderCategories();
             renderActivityFeed();
             if (document.getElementById('view-category').classList.contains('active')) {
-                const catName = document.getElementById('category-view-title').textContent.replace('تخصص: ', '').trim();
+                const catName = document.getElementById('category-view-title').textContent.replace('تخصص: ', '').replace('مہارت: ', '').trim();
                 openCategoryPage(catName, false);
             }
         });
@@ -430,7 +747,6 @@
             if (document.getElementById('view-worker-board').classList.contains('active')) renderRequestsBoard();
         });
 
-        // الاستماع لقائمة محادثاتي (لتحديث القائمة الجانبية فوراً)
         db.ref('chatList/' + myUserId).on('value', (snapshot) => {
             chatList = [];
             snapshot.forEach(child => { chatList.push({ id: child.key, ...child.val() }); });
@@ -440,8 +756,12 @@
         });
 
         // ============================================
-        // 3. دوال مساعدة آمنة
+        // 4. دوال مساعدة
         // ============================================
+        function t(key) {
+            return translations[currentLanguage][key] || key;
+        }
+
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
@@ -507,38 +827,56 @@
         }
 
         // ============================================
-        // 4. وظائف السوق
+        // 5. وظائف السوق
         // ============================================
         function renderCategories() {
             const grid = document.getElementById('categoriesGrid');
             if (!grid) return;
             grid.innerHTML = categories.map((cat, index) => {
                 const count = workers.filter(w => w.specialty === cat.name).length;
+                const catNameDisplay = currentLanguage === 'ur' ? getUrduCategoryName(cat.name) : cat.name;
                 return `<div class="category-card" style="animation-delay: ${index * 0.05}s" onclick="openCategoryPage('${cat.name}')">
                     <div class="category-icon"><i class="fas ${cat.icon}"></i></div>
-                    <h3>${escapeHtml(cat.name)}</h3><span>${count} حرفي متاح</span>
+                    <h3>${escapeHtml(catNameDisplay)}</h3><span>${count} ${t('available')}</span>
                 </div>`;
             }).join('');
+        }
+
+        function getUrduCategoryName(name) {
+            const map = {
+                'كهرباء': 'الیکٹریشن',
+                'سباكة': 'پلمبر',
+                'بناء': 'تعمیرات',
+                'لياسة': 'پلاسٹر',
+                'بلاط': 'ٹائلیں',
+                'دهانات': 'پینٹنگ',
+                'نجارة': 'بڑھئی',
+                'حدادة': 'لوہار',
+                'تبريد': 'ایئر کنڈیشننگ',
+                'أخرى': 'دیگر'
+            };
+            return map[name] || name;
         }
 
         function openCategoryPage(categoryName, showViewFlag = true) {
             const filteredWorkers = workers.filter(w => w.specialty === categoryName);
             const titleEl = document.getElementById('category-view-title');
-            if (titleEl) titleEl.innerHTML = `تخصص: <span style="color:var(--secondary-light)">${escapeHtml(categoryName)}</span>`;
+            const displayName = currentLanguage === 'ur' ? getUrduCategoryName(categoryName) : categoryName;
+            if (titleEl) titleEl.innerHTML = `${currentLanguage === 'ar' ? 'تخصص: ' : 'مہارت: '} <span style="color:var(--secondary-light)">${escapeHtml(displayName)}</span>`;
             const grid = document.getElementById('category-workers-grid');
             if (!grid) return;
             const favorites = JSON.parse(localStorage.getItem('hirafi_favorites') || '[]');
 
             if (filteredWorkers.length === 0) {
-                grid.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i><p>لا يوجد حرفيون في هذا التخصص حالياً.</p></div>`;
+                grid.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i><p>${t('no_workers')}</p></div>`;
             } else {
                 grid.innerHTML = filteredWorkers.map((worker, index) => {
                     const isFavorite = favorites.includes(worker.id);
                     const whatsappLink = `https://wa.me/${formatPhoneForWhatsApp(worker.phone)}`;
                     const isOwner = worker.ownerId === myUserId;
                     const ownerActions = isOwner ? `
-                        <button class="btn-warning" onclick="editWorkerById('${worker.id}')" style="flex:1;"><i class="fas fa-edit"></i> تعديل</button>
-                        <button class="btn-danger" onclick="deleteWorkerById('${worker.id}')" style="flex:1;"><i class="fas fa-trash"></i> حذف</button>
+                        <button class="btn-warning" onclick="editWorkerById('${worker.id}')" style="flex:1;">${t('edit')}</button>
+                        <button class="btn-danger" onclick="deleteWorkerById('${worker.id}')" style="flex:1;">${t('delete')}</button>
                     ` : '';
 
                     return `
@@ -552,15 +890,15 @@
                         </div>
                         <div class="tags">
                             <span class="tag"><i class="fas fa-briefcase"></i> ${escapeHtml(worker.specialty)}</span>
-                            <span class="tag" style="background:rgba(16,185,129,0.1); color:var(--success); border-color:var(--success);"><i class="fas fa-check-circle"></i> متاح</span>
+                            <span class="tag" style="background:rgba(16,185,129,0.1); color:var(--success); border-color:var(--success);"><i class="fas fa-check-circle"></i> ${t('available')}</span>
                         </div>
                         <div class="actions">
-                            <button class="chat-btn" onclick="showProfileDetailsById('${worker.id}', 'worker')"><i class="fas fa-user"></i> التفاصيل</button>
-                            <a href="tel:${worker.phone}" class="call-btn"><i class="fas fa-phone"></i> اتصال</a>
-                            <a href="${whatsappLink}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</a>
+                            <button class="chat-btn" onclick="showProfileDetailsById('${worker.id}', 'worker')"><i class="fas fa-user"></i> ${t('details')}</button>
+                            <a href="tel:${worker.phone}" class="call-btn"><i class="fas fa-phone"></i> ${t('call')}</a>
+                            <a href="${whatsappLink}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> ${t('whatsapp')}</a>
                         </div>
                         <div style="margin-top:10px; display:flex; gap:8px;">
-                            <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${worker.id}', this)" style="flex:1;"><i class="fas fa-heart"></i> ${isFavorite ? 'مفضل' : 'أضف للمفضلة'}</button>
+                            <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${worker.id}', this)" style="flex:1;"><i class="fas fa-heart"></i> ${isFavorite ? t('favorite') : t('add_to_favorites')}</button>
                         </div>
                         ${isOwner ? `<div class="actions" style="margin-top:8px;">${ownerActions}</div>` : ''}
                     </div>`;
@@ -574,13 +912,13 @@
             if (favorites.includes(workerId)) {
                 favorites = favorites.filter(id => id !== workerId);
                 btn.classList.remove('active');
-                btn.innerHTML = '<i class="fas fa-heart"></i> أضف للمفضلة';
-                showToast('تم الإزالة من المفضلة');
+                btn.innerHTML = `<i class="fas fa-heart"></i> ${t('add_to_favorites')}`;
+                showToast(t('remove_from_favorites'));
             } else {
                 favorites.push(workerId);
                 btn.classList.add('active');
-                btn.innerHTML = '<i class="fas fa-heart"></i> مفضل';
-                showToast('تمت الإضافة للمفضلة ❤️');
+                btn.innerHTML = `<i class="fas fa-heart"></i> ${t('favorite')}`;
+                showToast(t('added_to_favorites'));
             }
             localStorage.setItem('hirafi_favorites', JSON.stringify(favorites));
         }
@@ -591,7 +929,7 @@
             const favorites = JSON.parse(localStorage.getItem('hirafi_favorites') || '[]');
             const favoriteWorkers = workers.filter(w => favorites.includes(w.id));
             if (favoriteWorkers.length === 0) {
-                grid.innerHTML = `<div class="empty-state"><i class="fas fa-heart-broken"></i><p>لا توجد حرفيين في المفضلة حالياً.</p></div>`;
+                grid.innerHTML = `<div class="empty-state"><i class="fas fa-heart-broken"></i><p>${t('no_favorites')}</p></div>`;
                 return;
             }
             grid.innerHTML = favoriteWorkers.map(worker => {
@@ -604,9 +942,9 @@
                     </div>
                     <div class="tags"><span class="tag"><i class="fas fa-briefcase"></i> ${escapeHtml(worker.specialty)}</span></div>
                     <div class="actions">
-                        <button class="chat-btn" onclick="showProfileDetailsById('${worker.id}', 'worker')"><i class="fas fa-user"></i> التفاصيل</button>
-                        <a href="tel:${worker.phone}" class="call-btn"><i class="fas fa-phone"></i> اتصال</a>
-                        <a href="${whatsappLink}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</a>
+                        <button class="chat-btn" onclick="showProfileDetailsById('${worker.id}', 'worker')"><i class="fas fa-user"></i> ${t('details')}</button>
+                        <a href="tel:${worker.phone}" class="call-btn"><i class="fas fa-phone"></i> ${t('call')}</a>
+                        <a href="${whatsappLink}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> ${t('whatsapp')}</a>
                     </div>
                 </div>`;
             }).join('');
@@ -615,13 +953,13 @@
         function searchCategory() {
             const q = document.getElementById('heroSearch').value.trim();
             if (!q) return;
-            const found = categories.find(c => c.name.includes(q));
+            const found = categories.find(c => c.name.includes(q) || (currentLanguage === 'ur' && getUrduCategoryName(c.name).includes(q)));
             if (found) openCategoryPage(found.name);
-            else showToast('⚠️ لم يتم العثور على التخصص');
+            else showToast(t('not_found'));
         }
 
         // ============================================
-        // 5. وظائف الطلبات
+        // 6. وظائف الطلبات
         // ============================================
         function handleRequestSubmit(event) {
             event.preventDefault();
@@ -653,14 +991,14 @@
                 }
                 showMessage('reqMessage', editId ? '✅ تم تحديث الطلب بنجاح!' : '✅ تم نشر طلبك بنجاح!');
                 resetRequestForm();
-                showToast(editId ? '✅ تم تحديث الطلب' : '✅ تم نشر طلبك!');
+                showToast(editId ? t('request_updated') : t('request_published'));
                 setTimeout(() => showView('view-worker-board'), 1500);
             }).catch(err => {
                 if (btn) {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ! حاول مجدداً';
                 }
-                showToast('❌ حدث خطأ: ' + err.message);
+                showToast(t('error') + err.message);
             });
         }
 
@@ -669,10 +1007,9 @@
             if (form) form.reset();
             const editId = document.getElementById('editRequestId');
             if (editId) editId.value = '';
-            const titleEl = document.getElementById('requestFormTitle');
-            if (titleEl) titleEl.textContent = 'أضف طلب خدمة جديد';
+            document.getElementById('requestFormTitle').textContent = t('requestFormTitle');
             const btn = document.getElementById('requestSubmitBtn');
-            if (btn) btn.innerHTML = '<i class="fas fa-paper-plane"></i> نشر الطلب في السوق';
+            if (btn) btn.innerHTML = `<i class="fas fa-paper-plane"></i> ${t('requestSubmitBtn')}`;
         }
 
         function editRequestById(reqId) {
@@ -685,16 +1022,15 @@
             document.getElementById('reqSpecialty').value = req.specialty;
             document.getElementById('reqDesc').value = req.desc;
             document.getElementById('reqBudget').value = req.budget === 'قابل للنقاش' ? '' : req.budget;
-            const titleEl = document.getElementById('requestFormTitle');
-            if (titleEl) titleEl.textContent = 'تعديل طلب الخدمة';
+            document.getElementById('requestFormTitle').textContent = 'تعديل طلب الخدمة';
             const btn = document.getElementById('requestSubmitBtn');
             if (btn) btn.innerHTML = '<i class="fas fa-edit"></i> حفظ التعديلات';
             showView('view-add-request');
         }
 
         function deleteRequestById(reqId) {
-            if (!confirm('هل أنت متأكد من حذف هذا الطلب نهائياً؟')) return;
-            db.ref('requests/' + reqId).remove().then(() => showToast('✅ تم حذف الطلب')).catch(err => showToast('❌ خطأ: ' + err.message));
+            if (!confirm(t('confirm_delete'))) return;
+            db.ref('requests/' + reqId).remove().then(() => showToast(t('deleted'))).catch(err => showToast(t('error') + err.message));
         }
 
         function renderRequestsBoard() {
@@ -702,7 +1038,7 @@
             if (!grid) return;
             const openRequests = requests.filter(r => r.status === 'مفتوح').sort((a,b) => b.timestamp - a.timestamp);
             if (openRequests.length === 0) {
-                grid.innerHTML = `<div class="empty-state"><i class="fas fa-clipboard-check"></i><p>لا توجد طلبات جديدة حالياً.</p></div>`;
+                grid.innerHTML = `<div class="empty-state"><i class="fas fa-clipboard-check"></i><p>${t('no_requests')}</p></div>`;
                 return;
             }
             grid.innerHTML = openRequests.map((req, index) => {
@@ -710,8 +1046,8 @@
                 const isOwner = req.ownerId === myUserId;
                 const ownerActions = isOwner ? `
                     <div class="actions" style="margin-top:10px;">
-                        <button class="btn-warning" onclick="editRequestById('${req.id}')" style="flex:1;"><i class="fas fa-edit"></i> تعديل</button>
-                        <button class="btn-danger" onclick="deleteRequestById('${req.id}')" style="flex:1;"><i class="fas fa-trash"></i> حذف</button>
+                        <button class="btn-warning" onclick="editRequestById('${req.id}')" style="flex:1;">${t('edit')}</button>
+                        <button class="btn-danger" onclick="deleteRequestById('${req.id}')" style="flex:1;">${t('delete')}</button>
                     </div>` : '';
 
                 return `
@@ -728,9 +1064,9 @@
                         <span class="tag" style="background:rgba(16,185,129,0.1); color:var(--success); border-color:var(--success);">مفتوح</span>
                     </div>
                     <div class="actions">
-                        <button class="chat-btn" onclick="showProfileDetailsById('${req.id}', 'client')"><i class="fas fa-user"></i> التفاصيل</button>
-                        <a href="tel:${req.clientPhone}" class="call-btn"><i class="fas fa-phone"></i> اتصال</a>
-                        <a href="${whatsappLink}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</a>
+                        <button class="chat-btn" onclick="showProfileDetailsById('${req.id}', 'client')"><i class="fas fa-user"></i> ${t('details')}</button>
+                        <a href="tel:${req.clientPhone}" class="call-btn"><i class="fas fa-phone"></i> ${t('call')}</a>
+                        <a href="${whatsappLink}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> ${t('whatsapp')}</a>
                     </div>
                     ${ownerActions}
                 </div>`;
@@ -738,7 +1074,7 @@
         }
 
         // ============================================
-        // 6. وظائف الحرفيين
+        // 7. وظائف الحرفيين
         // ============================================
         function handleWorkerSubmit(event) {
             event.preventDefault();
@@ -767,14 +1103,14 @@
                 }
                 showMessage('workerAddMessage', editId ? '✅ تم تحديث بياناتك بنجاح!' : '✅ تم نشر ملفك بنجاح!');
                 resetWorkerForm();
-                showToast(editId ? '✅ تم تحديث بياناتك' : '✅ تم نشر ملفك!');
+                showToast(editId ? t('worker_updated') : t('worker_published'));
                 setTimeout(() => showView('view-home'), 1500);
             }).catch(err => {
                 if (btn) {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ! حاول مجدداً';
                 }
-                showToast('❌ حدث خطأ: ' + err.message);
+                showToast(t('error') + err.message);
             });
         }
 
@@ -783,10 +1119,9 @@
             if (form) form.reset();
             const editId = document.getElementById('editWorkerId');
             if (editId) editId.value = '';
-            const titleEl = document.getElementById('workerFormTitle');
-            if (titleEl) titleEl.textContent = 'انضم كحرفي محترف';
+            document.getElementById('workerFormTitle').textContent = t('workerFormTitle');
             const btn = document.getElementById('workerSubmitBtn');
-            if (btn) btn.innerHTML = '<i class="fas fa-user-plus"></i> نشر الملف في السوق';
+            if (btn) btn.innerHTML = `<i class="fas fa-user-plus"></i> ${t('workerSubmitBtn')}`;
         }
 
         function editWorkerById(workerId) {
@@ -797,16 +1132,15 @@
             document.getElementById('workerPhone').value = worker.phone;
             document.getElementById('workerAddress').value = worker.address;
             document.getElementById('workerSpecialty').value = worker.specialty;
-            const titleEl = document.getElementById('workerFormTitle');
-            if (titleEl) titleEl.textContent = 'تعديل بيانات الحرفي';
+            document.getElementById('workerFormTitle').textContent = 'تعديل بيانات الحرفي';
             const btn = document.getElementById('workerSubmitBtn');
             if (btn) btn.innerHTML = '<i class="fas fa-edit"></i> حفظ التعديلات';
             showView('view-add-worker');
         }
 
         function deleteWorkerById(workerId) {
-            if (!confirm('هل أنت متأكد من حذف ملفك نهائياً من المنصة؟')) return;
-            db.ref('workers/' + workerId).remove().then(() => showToast('✅ تم حذف الملف بنجاح')).catch(err => showToast('❌ خطأ: ' + err.message));
+            if (!confirm(t('confirm_delete_worker'))) return;
+            db.ref('workers/' + workerId).remove().then(() => showToast(t('deleted_worker'))).catch(err => showToast(t('error') + err.message));
         }
 
         function addAddressAuto() {
@@ -824,7 +1158,7 @@
         }
 
         // ============================================
-        // 7. عرض التفاصيل
+        // 8. عرض التفاصيل
         // ============================================
         function showProfileDetailsById(id, type) {
             const personData = type === 'worker' ? workers.find(w => w.id === id) : requests.find(r => r.id === id);
@@ -835,7 +1169,7 @@
             const name = type === 'worker' ? personData.name : personData.clientName;
             const avatar = name ? escapeHtml(name).charAt(0) : '?';
             const statusBadge = type === 'worker' ?
-                `<span class="profile-status"><i class="fas fa-check-circle"></i> متاح للعمل</span>` :
+                `<span class="profile-status"><i class="fas fa-check-circle"></i> ${t('available')}</span>` :
                 `<span class="profile-status" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:#3b82f6"><i class="fas fa-user-circle"></i> عميل</span>`;
 
             const phone = type === 'worker' ? personData.phone : personData.clientPhone;
@@ -844,10 +1178,10 @@
 
             const ownerButtons = isOwner ? `
                 <button class="btn btn-warning" onclick="${type === 'worker' ? `editWorkerById('${id}')` : `editRequestById('${id}')`}" style="color:white;">
-                    <i class="fas fa-edit"></i> تعديل البيانات
+                    <i class="fas fa-edit"></i> ${t('edit')}
                 </button>
                 <button class="btn btn-danger" onclick="${type === 'worker' ? `deleteWorkerById('${id}')` : `deleteRequestById('${id}')`}" style="color:white;">
-                    <i class="fas fa-trash"></i> حذف نهائي
+                    <i class="fas fa-trash"></i> ${t('delete')}
                 </button>
             ` : '';
 
@@ -883,8 +1217,8 @@
                     </div>` : ''}
                 </div>
                 <div class="profile-actions">
-                    <a href="tel:${phone}" class="btn" style="background:var(--success);color:white;"><i class="fas fa-phone"></i> اتصال</a>
-                    <a href="${whatsappLink}" target="_blank" class="btn" style="background:#25D366;color:white;"><i class="fab fa-whatsapp"></i> واتساب</a>
+                    <a href="tel:${phone}" class="btn" style="background:var(--success);color:white;"><i class="fas fa-phone"></i> ${t('call')}</a>
+                    <a href="${whatsappLink}" target="_blank" class="btn" style="background:#25D366;color:white;"><i class="fab fa-whatsapp"></i> ${t('whatsapp')}</a>
                     <button class="btn" onclick="startChatWith('${personData.ownerId}', '${escapeHtml(name)}')" style="background:linear-gradient(135deg,var(--secondary),var(--primary-light));color:white;">
                         <i class="fas fa-comment"></i> مراسلة
                     </button>
@@ -895,7 +1229,7 @@
         }
 
         // ============================================
-        // 8. قائمة النشاط الأخيرة
+        // 9. قائمة النشاط الأخيرة
         // ============================================
         function renderActivityFeed() {
             const feedContainer = document.getElementById('activityFeed');
@@ -906,7 +1240,7 @@
             ].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 6);
 
             if (allActivity.length === 0) {
-                feedContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px;"><i class="fas fa-inbox" style="font-size:24px; opacity:0.3; display:block; margin-bottom:10px;"></i>لا يوجد نشاط حديث على المنصة.</div>`;
+                feedContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px;"><i class="fas fa-inbox" style="font-size:24px; opacity:0.3; display:block; margin-bottom:10px;"></i>${t('no_activity')}</div>`;
                 return;
             }
 
@@ -915,11 +1249,11 @@
                 const icon = isWorker ? 'fa-user-plus' : 'fa-clipboard-list';
                 const color = isWorker ? 'var(--success)' : 'var(--accent)';
                 const text = isWorker
-                    ? `انضم حرفي جديد: <strong>${escapeHtml(item.name)}</strong> (تخصص: ${escapeHtml(item.specialty)})`
-                    : `طلب خدمة جديد: <strong>${escapeHtml(item.specialty)}</strong> في ${escapeHtml(item.location)}`;
+                    ? `${currentLanguage === 'ar' ? 'انضم حرفي جديد' : 'نیا کاریگر شامل ہوا'}: <strong>${escapeHtml(item.name)}</strong> (${currentLanguage === 'ar' ? 'تخصص' : 'مہارت'}: ${escapeHtml(item.specialty)})`
+                    : `${currentLanguage === 'ar' ? 'طلب خدمة جديد' : 'نئی سروس کی درخواست'}: <strong>${escapeHtml(item.specialty)}</strong> ${currentLanguage === 'ar' ? 'في' : 'میں'} ${escapeHtml(item.location)}`;
                 
                 const seconds = Math.floor((Date.now() - (item.timestamp || 0)) / 1000);
-                const timeAgo = seconds < 60 ? 'الآن' : seconds < 3600 ? `منذ ${Math.floor(seconds/60)} دقيقة` : `منذ ${Math.floor(seconds/3600)} ساعة`;
+                const timeAgo = seconds < 60 ? (currentLanguage === 'ar' ? 'الآن' : 'ابھی') : seconds < 3600 ? `${currentLanguage === 'ar' ? 'منذ' : ''} ${Math.floor(seconds/60)} ${currentLanguage === 'ar' ? 'دقيقة' : 'منٹ}` : `${currentLanguage === 'ar' ? 'منذ' : ''} ${Math.floor(seconds/3600)} ${currentLanguage === 'ar' ? 'ساعة' : 'گھنٹے'}`;
 
                 return `
                 <div class="activity-item" style="animation-delay: ${index * 0.1}s; cursor:pointer;" onclick="showProfileDetailsById('${item.id}', '${item.type}')">
@@ -931,32 +1265,30 @@
         }
 
         // ============================================
-        // 9. وظائف الدردشة (Real-time Firebase)
+        // 10. وظائف الدردشة (Real-time Firebase)
         // ============================================
         function renderChatList() {
             const container = document.getElementById('chatListItemsSide');
             if (!container) return;
             if (chatList.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">لا توجد محادثات.</div>`;
+                container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">${t('no_chats')}</div>`;
                 return;
             }
             container.innerHTML = chatList.map(chat => `
                 <div class="chat-list-item" data-chat-id="${chat.id}" onclick="switchChat('${chat.id}', '${escapeHtml(chat.targetName)}', this)">
                     <div class="avatar">${escapeHtml(chat.targetName).charAt(0)}</div>
                     <div class="chat-info">
-                        <div class="name">${escapeHtml(chat.targetName) || 'مستخدم'}</div>
-                        <div style="font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(chat.lastMessage || 'اضغط لفتح المحادثة')}</div>
+                        <div class="name">${escapeHtml(chat.targetName) || t('unknown')}</div>
+                        <div style="font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(chat.lastMessage || t('start_chat'))}</div>
                     </div>
                 </div>`).join('');
         }
 
         function switchChat(chatId, targetName, activeElement = null) {
-            // إزالة الكلاس active من جميع عناصر القائمة
             document.querySelectorAll('.chat-list-item').forEach(el => el.classList.remove('active'));
             if (activeElement) {
                 activeElement.classList.add('active');
             } else {
-                // إذا لم يتم تمرير العنصر، نبحث عنه في القائمة
                 const item = document.querySelector(`.chat-list-item[data-chat-id="${chatId}"]`);
                 if (item) item.classList.add('active');
             }
@@ -970,16 +1302,14 @@
             
             const headerName = document.getElementById('chatHeaderName');
             const headerAvatar = document.getElementById('chatHeaderAvatar');
-            if (headerName) headerName.textContent = targetName || 'مستخدم';
+            if (headerName) headerName.textContent = targetName || t('unknown');
             if (headerAvatar) headerAvatar.textContent = targetName ? targetName.charAt(0) : '?';
 
-            // فصل المستمع القديم لتفادي تكرار الرسائل
             if (currentChatListener) {
                 currentChatListener();
                 currentChatListener = null;
             }
 
-            // الاستماع للرسائل في الوقت الفعلي
             const messagesRef = db.ref('chats/' + chatId + '/messages');
             currentChatListener = messagesRef.on('value', (snapshot) => {
                 const msgs = [];
@@ -993,7 +1323,7 @@
             if (!container) return;
             container.innerHTML = '';
             if (!msgs || msgs.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:20px; font-size:13px;">ابدأ المحادثة الآن</div>';
+                container.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin-top:20px; font-size:13px;">${t('chat_placeholder')}</div>`;
                 return;
             }
             msgs.forEach(msg => {
@@ -1017,10 +1347,8 @@
                 time: new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'})
             };
             
-            // إرسال الرسالة لقاعدة البيانات
             db.ref('chats/' + currentChatId + '/messages').push(msgData);
             
-            // تحديث آخر رسالة في قائمة المحادثات للطرفين
             const currentChat = chatList.find(c => c.id === currentChatId);
             if (currentChat) {
                 db.ref('chatList/' + myUserId + '/' + currentChatId + '/lastMessage').set(text);
@@ -1031,39 +1359,34 @@
         }
 
         function startChatWith(targetId, targetName) {
-            // إنشاء معرف فريد للمحادثة بين شخصين (لتكون متبادلة)
             const chatId = 'chat_' + [myUserId, targetId].sort().join('_');
             
-            // إضافة المحادثة لقائمتي
             db.ref('chatList/' + myUserId + '/' + chatId).set({
                 targetId: targetId,
                 targetName: targetName,
-                lastMessage: 'بدء محادثة...'
+                lastMessage: t('start_chat')
             });
 
-            // معرفة اسمي لإضافته في قائمة الطرف الآخر
-            let myName = "مستخدم حِرَفي";
+            let myName = t('unknown');
             const myWorker = workers.find(w => w.ownerId === myUserId);
             const myReq = requests.find(r => r.ownerId === myUserId);
             if (myWorker) myName = myWorker.name;
             if (myReq) myName = myReq.clientName;
 
-            // إضافة المحادثة لقائمة الطرف الآخر
             db.ref('chatList/' + targetId + '/' + chatId).set({
                 targetId: myUserId,
                 targetName: myName,
-                lastMessage: 'بدء محادثة...'
+                lastMessage: t('start_chat')
             });
             
             showView('view-chat');
             setTimeout(() => {
-                // نمرر null للـ activeElement لأننا نريد البحث عنه في القائمة
                 switchChat(chatId, targetName, null);
             }, 300);
         }
 
         function deleteCurrentChatLocally() {
-            if (!currentChatId || !confirm('حذف هذه المحادثة من قائمتك؟')) return;
+            if (!currentChatId || !confirm(t('confirm_delete_chat'))) return;
             db.ref('chatList/' + myUserId + '/' + currentChatId).remove();
             currentChatId = null;
             const placeholder = document.getElementById('chatPlaceholder');
@@ -1074,10 +1397,15 @@
                 currentChatListener();
                 currentChatListener = null;
             }
-            showToast('✅ تم حذف المحادثة من قائمتك');
+            showToast(t('chat_deleted'));
         }
 
-        // Initialize on load
+        // ============================================
+        // 11. التهيئة عند التحميل
+        // ============================================
+        // تعيين اللغة الافتراضية
+        setLanguage(localStorage.getItem('hirafi_lang') || 'ar');
+        
         renderCategories();
         renderActivityFeed();
     </script>
