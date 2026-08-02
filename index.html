@@ -941,7 +941,7 @@
                 return;
             }
             container.innerHTML = chatList.map(chat => `
-                <div class="chat-list-item ${chat.id === currentChatId ? 'active' : ''}" onclick="switchChat('${chat.id}', '${escapeHtml(chat.targetName)}')">
+                <div class="chat-list-item" data-chat-id="${chat.id}" onclick="switchChat('${chat.id}', '${escapeHtml(chat.targetName)}', this)">
                     <div class="avatar">${escapeHtml(chat.targetName).charAt(0)}</div>
                     <div class="chat-info">
                         <div class="name">${escapeHtml(chat.targetName) || 'مستخدم'}</div>
@@ -950,25 +950,38 @@
                 </div>`).join('');
         }
 
-        function switchChat(chatId, targetName) {
-            currentChatId = chatId;
+        function switchChat(chatId, targetName, activeElement = null) {
+            // إزالة الكلاس active من جميع عناصر القائمة
             document.querySelectorAll('.chat-list-item').forEach(el => el.classList.remove('active'));
-            if (window.event && window.event.currentTarget) window.event.currentTarget.classList.add('active');
+            if (activeElement) {
+                activeElement.classList.add('active');
+            } else {
+                // إذا لم يتم تمرير العنصر، نبحث عنه في القائمة
+                const item = document.querySelector(`.chat-list-item[data-chat-id="${chatId}"]`);
+                if (item) item.classList.add('active');
+            }
+            
+            currentChatId = chatId;
             
             const placeholder = document.getElementById('chatPlaceholder');
             const activeWindow = document.getElementById('activeChatWindow');
             if (placeholder) placeholder.style.display = 'none';
             if (activeWindow) activeWindow.style.display = 'flex';
+            
             const headerName = document.getElementById('chatHeaderName');
             const headerAvatar = document.getElementById('chatHeaderAvatar');
             if (headerName) headerName.textContent = targetName || 'مستخدم';
             if (headerAvatar) headerAvatar.textContent = targetName ? targetName.charAt(0) : '?';
 
             // فصل المستمع القديم لتفادي تكرار الرسائل
-            if (currentChatListener) currentChatListener();
+            if (currentChatListener) {
+                currentChatListener();
+                currentChatListener = null;
+            }
 
             // الاستماع للرسائل في الوقت الفعلي
-            currentChatListener = db.ref('chats/' + chatId + '/messages').on('value', (snapshot) => {
+            const messagesRef = db.ref('chats/' + chatId + '/messages');
+            currentChatListener = messagesRef.on('value', (snapshot) => {
                 const msgs = [];
                 snapshot.forEach(child => { msgs.push(child.val()); });
                 renderMessages(chatId, msgs);
@@ -1043,7 +1056,10 @@
             });
             
             showView('view-chat');
-            setTimeout(() => switchChat(chatId, targetName), 200);
+            setTimeout(() => {
+                // نمرر null للـ activeElement لأننا نريد البحث عنه في القائمة
+                switchChat(chatId, targetName, null);
+            }, 300);
         }
 
         function deleteCurrentChatLocally() {
@@ -1054,7 +1070,10 @@
             const activeWindow = document.getElementById('activeChatWindow');
             if (placeholder) placeholder.style.display = 'flex';
             if (activeWindow) activeWindow.style.display = 'none';
-            if (currentChatListener) currentChatListener();
+            if (currentChatListener) {
+                currentChatListener();
+                currentChatListener = null;
+            }
             showToast('✅ تم حذف المحادثة من قائمتك');
         }
 
