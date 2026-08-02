@@ -381,7 +381,7 @@
             projectId: "asmar-c5a76",
             storageBucket: "asmar-c5a76.firebasestorage.app",
             messagingSenderId: "122714975670",
-            appId: "1:122714975670:web:5c2bdbd2aa17a7d712517"
+            appId: "1:122714975670:web:5c2bdb8d2aa17a7d712517"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -397,9 +397,9 @@
 
         let workers = [];
         let requests = [];
-        let chats = JSON.parse(localStorage.getItem('hirafi_chats_local')) || [];
-        let messages = JSON.parse(localStorage.getItem('hirafi_messages_local')) || {};
+        let chatList = [];
         let currentChatId = null;
+        let currentChatListener = null;
 
         const categories = [
             { name: 'كهرباء', icon: 'fa-bolt' }, { name: 'سباكة', icon: 'fa-wrench' },
@@ -428,6 +428,15 @@
             snapshot.forEach(child => { requests.push({ ...child.val(), id: child.key }); });
             renderActivityFeed();
             if (document.getElementById('view-worker-board').classList.contains('active')) renderRequestsBoard();
+        });
+
+        // الاستماع لقائمة محادثاتي (لتحديث القائمة الجانبية فوراً)
+        db.ref('chatList/' + myUserId).on('value', (snapshot) => {
+            chatList = [];
+            snapshot.forEach(child => { chatList.push({ id: child.key, ...child.val() }); });
+            if (document.getElementById('view-chat').classList.contains('active')) {
+                renderChatList();
+            }
         });
 
         // ============================================
@@ -876,6 +885,9 @@
                 <div class="profile-actions">
                     <a href="tel:${phone}" class="btn" style="background:var(--success);color:white;"><i class="fas fa-phone"></i> اتصال</a>
                     <a href="${whatsappLink}" target="_blank" class="btn" style="background:#25D366;color:white;"><i class="fab fa-whatsapp"></i> واتساب</a>
+                    <button class="btn" onclick="startChatWith('${personData.ownerId}', '${escapeHtml(name)}')" style="background:linear-gradient(135deg,var(--secondary),var(--primary-light));color:white;">
+                        <i class="fas fa-comment"></i> مراسلة
+                    </button>
                     ${ownerButtons}
                 </div>
             `;
@@ -919,26 +931,30 @@
         }
 
         // ============================================
-        // 9. وظائف الدردشة
+        // 9. وظائف الدردشة (Real-time Firebase)
         // ============================================
         function renderChatList() {
             const container = document.getElementById('chatListItemsSide');
             if (!container) return;
-            if (chats.length === 0) {
+            if (chatList.length === 0) {
                 container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">لا توجد محادثات.</div>`;
                 return;
             }
-            container.innerHTML = chats.map(chat => `
+            container.innerHTML = chatList.map(chat => `
                 <div class="chat-list-item ${chat.id === currentChatId ? 'active' : ''}" onclick="switchChat('${chat.id}', '${escapeHtml(chat.targetName)}')">
                     <div class="avatar">${escapeHtml(chat.targetName).charAt(0)}</div>
-                    <div class="chat-info"><div class="name">${escapeHtml(chat.targetName) || 'مستخدم'}</div></div>
+                    <div class="chat-info">
+                        <div class="name">${escapeHtml(chat.targetName) || 'مستخدم'}</div>
+                        <div style="font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(chat.lastMessage || 'اضغط لفتح المحادثة')}</div>
+                    </div>
                 </div>`).join('');
         }
 
         function switchChat(chatId, targetName) {
             currentChatId = chatId;
             document.querySelectorAll('.chat-list-item').forEach(el => el.classList.remove('active'));
-            if (event && event.currentTarget) event.currentTarget.classList.add('active');
+            if (window.event && window.event.currentTarget) window.event.currentTarget.classList.add('active');
+            
             const placeholder = document.getElementById('chatPlaceholder');
             const activeWindow = document.getElementById('activeChatWindow');
             if (placeholder) placeholder.style.display = 'none';
@@ -947,19 +963,27 @@
             const headerAvatar = document.getElementById('chatHeaderAvatar');
             if (headerName) headerName.textContent = targetName || 'مستخدم';
             if (headerAvatar) headerAvatar.textContent = targetName ? targetName.charAt(0) : '?';
-            renderMessages(chatId);
+
+            // فصل المستمع القديم لتفادي تكرار الرسائل
+            if (currentChatListener) currentChatListener();
+
+            // الاستماع للرسائل في الوقت الفعلي
+            currentChatListener = db.ref('chats/' + chatId + '/messages').on('value', (snapshot) => {
+                const msgs = [];
+                snapshot.forEach(child => { msgs.push(child.val()); });
+                renderMessages(chatId, msgs);
+            });
         }
 
-        function renderMessages(chatId) {
+        function renderMessages(chatId, msgs) {
             const container = document.getElementById('chatMessages');
             if (!container) return;
             container.innerHTML = '';
-            const chatMessages = messages[chatId] || [];
-            if (chatMessages.length === 0) {
+            if (!msgs || msgs.length === 0) {
                 container.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:20px; font-size:13px;">ابدأ المحادثة الآن</div>';
                 return;
             }
-            chatMessages.forEach(msg => {
+            msgs.forEach(msg => {
                 const div = document.createElement('div');
                 const isMine = msg.senderId === myUserId;
                 div.className = `message-bubble ${isMine ? 'sent' : 'received'}`;
@@ -973,37 +997,65 @@
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
             if (!text || !currentChatId) return;
-            if (!messages[currentChatId]) messages[currentChatId] = [];
-            messages[currentChatId].push({ text, senderId: myUserId, time: new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'}) });
-            localStorage.setItem('hirafi_messages_local', JSON.stringify(messages));
+            
+            const msgData = {
+                text: text,
+                senderId: myUserId,
+                time: new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'})
+            };
+            
+            // إرسال الرسالة لقاعدة البيانات
+            db.ref('chats/' + currentChatId + '/messages').push(msgData);
+            
+            // تحديث آخر رسالة في قائمة المحادثات للطرفين
+            const currentChat = chatList.find(c => c.id === currentChatId);
+            if (currentChat) {
+                db.ref('chatList/' + myUserId + '/' + currentChatId + '/lastMessage').set(text);
+                db.ref('chatList/' + currentChat.targetId + '/' + currentChatId + '/lastMessage').set(text);
+            }
+            
             input.value = '';
-            renderMessages(currentChatId);
         }
 
         function startChatWith(targetId, targetName) {
-            let existingChat = chats.find(c => c.targetId === targetId);
-            if (!existingChat) {
-                existingChat = { id: 'chat_' + Date.now(), targetId, targetName };
-                chats.push(existingChat);
-                localStorage.setItem('hirafi_chats_local', JSON.stringify(chats));
-            }
+            // إنشاء معرف فريد للمحادثة بين شخصين (لتكون متبادلة)
+            const chatId = 'chat_' + [myUserId, targetId].sort().join('_');
+            
+            // إضافة المحادثة لقائمتي
+            db.ref('chatList/' + myUserId + '/' + chatId).set({
+                targetId: targetId,
+                targetName: targetName,
+                lastMessage: 'بدء محادثة...'
+            });
+
+            // معرفة اسمي لإضافته في قائمة الطرف الآخر
+            let myName = "مستخدم حِرَفي";
+            const myWorker = workers.find(w => w.ownerId === myUserId);
+            const myReq = requests.find(r => r.ownerId === myUserId);
+            if (myWorker) myName = myWorker.name;
+            if (myReq) myName = myReq.clientName;
+
+            // إضافة المحادثة لقائمة الطرف الآخر
+            db.ref('chatList/' + targetId + '/' + chatId).set({
+                targetId: myUserId,
+                targetName: myName,
+                lastMessage: 'بدء محادثة...'
+            });
+            
             showView('view-chat');
-            setTimeout(() => switchChat(existingChat.id, existingChat.targetName), 100);
+            setTimeout(() => switchChat(chatId, targetName), 200);
         }
 
         function deleteCurrentChatLocally() {
-            if (!currentChatId || !confirm('حذف هذه المحادثة؟')) return;
-            chats = chats.filter(c => c.id !== currentChatId);
-            delete messages[currentChatId];
-            localStorage.setItem('hirafi_chats_local', JSON.stringify(chats));
-            localStorage.setItem('hirafi_messages_local', JSON.stringify(messages));
+            if (!currentChatId || !confirm('حذف هذه المحادثة من قائمتك؟')) return;
+            db.ref('chatList/' + myUserId + '/' + currentChatId).remove();
             currentChatId = null;
             const placeholder = document.getElementById('chatPlaceholder');
             const activeWindow = document.getElementById('activeChatWindow');
             if (placeholder) placeholder.style.display = 'flex';
             if (activeWindow) activeWindow.style.display = 'none';
-            renderChatList();
-            showToast('✅ تم حذف المحادثة');
+            if (currentChatListener) currentChatListener();
+            showToast('✅ تم حذف المحادثة من قائمتك');
         }
 
         // Initialize on load
